@@ -1,0 +1,4 @@
+downlaod_identical.py
+venv/*
+classes/__pycache__/
+.idea/
