@@ -16,10 +16,11 @@ class MappingTable:
             #print(line)
             my_array.append(line)
             count += 1
-            if count > 20:
+            if count > 1000:
                 break
             line = file.readline()
         file.close()
+        print("total of ", count, " accessions")
         return my_array
 
 
@@ -33,26 +34,33 @@ class IdenticalProtein:
         api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
         request = "efetch -db protein -id " + self.accession_number + " -format ipg -api_key " + api_key + " > " + self.file
         os.system(request)
-        print("requesting:", request)
+        #print("requesting:", request)
 
-    def all_accession_numbers(self):
+    def all_accession_numbers_and_genera(self):
         file = open(self.file, "r")
         line = file.readline()
         count = 0
         all_accession_numbers = []
+        all_genera = []
         while line:
             line = line.rstrip()
             my_list = (line.split('\t'))
-            #print(my_list[6])
+            specie = (my_list[8])
+            genera_array = (specie.split(' '))
+            genera = genera_array[0]
+            #print(genera)
+            if genera in all_genera:
+                pass
+            else:
+                all_genera.append(genera)
             all_accession_numbers.append(my_list[6])
             count += 1
-            if count > 20:
+            '''
+            if count > 100:
                 break
+            '''
             line = file.readline()
 
         file.close()
-        #print(all_accession_numbers)
+        print("All genera: ", all_genera, " from ", count, " accessions")
         return all_accession_numbers
-
-    def all_genera_simple(self):
-        pass

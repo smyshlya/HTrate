@@ -13,13 +13,14 @@ new_array = mapping_table.parse_mapping_table()
 for acc_number in new_array:
     identical_protein = IdenticalProtein(acc_number, directory)
     if os.path.isfile(identical_protein.file):
-        print("file ", identical_protein.file, " already exists\n")
+        pass
+        #print("file ", identical_protein.file, " already exists\n")
     else:
         identical_protein.download()
 
 #we open the IP file and remove all instances of the protein from the mapping table
-    all_identical = identical_protein.all_accession_numbers()
+    all_identical = identical_protein.all_accession_numbers_and_genera()
     new_array = [x for x in new_array if x not in all_identical]
-    print("Accession numbers left to process:", new_array)
+   # print("Accession numbers left to process:", new_array)
 
 #we report in how many genera the protein is found
