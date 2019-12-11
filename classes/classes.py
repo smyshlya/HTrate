@@ -63,4 +63,4 @@ class IdenticalProtein:
 
         file.close()
         print("All genera: ", all_genera, " from ", count, " accessions")
-        return all_accession_numbers
+        return all_accession_numbers, all_genera
