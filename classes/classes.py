@@ -42,6 +42,7 @@ class IdenticalProtein:
         count = 0
         all_accession_numbers = []
         all_genera = []
+        genera_number = {}
         while line:
             line = line.rstrip()
             my_list = (line.split('\t'))
@@ -50,8 +51,9 @@ class IdenticalProtein:
             genera = genera_array[0]
             #print(genera)
             if genera in all_genera:
-                pass
+                genera_number[genera] += 1
             else:
+                genera_number[genera] = 0
                 all_genera.append(genera)
             all_accession_numbers.append(my_list[6])
             count += 1
@@ -63,4 +65,4 @@ class IdenticalProtein:
 
         file.close()
         print("All genera: ", all_genera, " from ", count, " accessions")
-        return all_accession_numbers, all_genera
+        return all_accession_numbers, all_genera, genera_number
