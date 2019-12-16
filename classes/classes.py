@@ -49,20 +49,15 @@ class IdenticalProtein:
             specie = (my_list[8])
             genera_array = (specie.split(' '))
             genera = genera_array[0]
-            #print(genera)
             if genera in all_genera:
                 genera_number[genera] += 1
             else:
-                genera_number[genera] = 0
+                genera_number[genera] = 1
                 all_genera.append(genera)
             all_accession_numbers.append(my_list[6])
             count += 1
-            '''
-            if count > 100:
-                break
-            '''
             line = file.readline()
 
         file.close()
-        print("All genera: ", all_genera, " from ", count, " accessions")
+        #print("All genera: ", all_genera, " from ", count, " accessions")
         return all_accession_numbers, all_genera, genera_number
