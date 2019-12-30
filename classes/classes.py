@@ -13,7 +13,7 @@ class MappingTable:
         line = file.readline()
         while line:
             line = line.rstrip()
-            #print(line)
+            # print(line)
             my_array.append(line)
             count += 1
             if count > 1000:
@@ -34,9 +34,9 @@ class IdenticalProtein:
         api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
         request = "efetch -db protein -id " + self.accession_number + " -format ipg -api_key " + api_key + " > " + self.file
         os.system(request)
-        #print("requesting:", request)
+        # print("requesting:", request)
 
-    def all_accession_numbers_and_genera(self):
+    def parse_identical_protein(self):
         file = open(self.file, "r")
         line = file.readline()
         count = 0
@@ -59,5 +59,5 @@ class IdenticalProtein:
             line = file.readline()
 
         file.close()
-        #print("All genera: ", all_genera, " from ", count, " accessions")
+        # print("All genera: ", all_genera, " from ", count, " accessions")
         return all_accession_numbers, all_genera, genera_number
