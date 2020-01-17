@@ -16,7 +16,7 @@ class MappingTable:
             # print(line)
             my_array.append(line)
             count += 1
-            if count > 1000:
+            if count > 10000:
                 break
             line = file.readline()
         file.close()
@@ -40,9 +40,9 @@ class IdenticalProtein:
         file = open(self.file, "r")
         line = file.readline()
         count = 0
-        all_accession_numbers = []
-        all_genera = []
-        genera_number = {}
+        all_accession_numbers = []  # LIST of all accession numbers belonging to this IP
+        all_genera = []  # LIST of all genera where this IP is found
+        genera_number = {}  # DICTIONARY: 'genera' -> number of instances
         while line:
             line = line.rstrip()
             my_list = (line.split('\t'))
@@ -57,7 +57,5 @@ class IdenticalProtein:
             all_accession_numbers.append(my_list[6])
             count += 1
             line = file.readline()
-
         file.close()
-        # print("All genera: ", all_genera, " from ", count, " accessions")
         return all_accession_numbers, all_genera, genera_number
