@@ -2,9 +2,9 @@ import os
 
 
 class MappingTable:
-    def __init__(self, filename):
+    def __init__(self, filename, threshold):
         self.filename = filename
-
+        self.threshold = threshold
     def parse_mapping_table(self):
         print("uploading", self.filename,"\n")
         my_array = []
@@ -16,7 +16,7 @@ class MappingTable:
             # print(line)
             my_array.append(line)
             count += 1
-            if count > 1000000:
+            if count > self.threshold:
                 break
             line = file.readline()
         file.close()
