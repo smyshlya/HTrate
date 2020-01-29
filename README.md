@@ -4,5 +4,5 @@ A script to identify horizontally transferred proteins
 
 ## Usage
 ```bash
-python HTrate.py
+python HTrate.py -in inputfile
 ```
