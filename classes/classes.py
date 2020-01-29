@@ -16,7 +16,7 @@ class MappingTable:
             # print(line)
             my_array.append(line)
             count += 1
-            if count > 10000:
+            if count > 1000000:
                 break
             line = file.readline()
         file.close()

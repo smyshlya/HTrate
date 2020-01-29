@@ -2,3 +2,7 @@ downlaod_identical.py
 venv/*
 classes/__pycache__/
 .idea/
+.gitignore~
+classes/plot.py
+classes/plot2.py
+out.txt
