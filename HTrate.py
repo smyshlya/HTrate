@@ -24,7 +24,7 @@ genera_number = {}
 # here we define input parameters: mapping table file, the only one we need for our analysis, HT threshold and protein number
 #filename = "/Users/gera/Desktop/ICEs/tyrosine_recombinase/epsilon_15/distribution_analysis/TR_distribution/SXT/SXT.mapping_table"
 filename = os.path.abspath(filename)
-directory = os.path.dirname(filename) + "/tmp"
+directory = os.path.dirname(filename) + "/ip"
 if not os.path.isdir(directory):
     print("creating %s folder" % directory)
     os.mkdir(directory)
