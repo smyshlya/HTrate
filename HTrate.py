@@ -23,7 +23,12 @@ genera_number = {}
 
 # here we define input parameters: mapping table file, the only one we need for our analysis, HT threshold and protein number
 #filename = "/Users/gera/Desktop/ICEs/tyrosine_recombinase/epsilon_15/distribution_analysis/TR_distribution/SXT/SXT.mapping_table"
-directory = os.path.dirname(filename)
+filename = os.path.abspath(filename)
+directory = os.path.dirname(filename) + "/tmp"
+if not os.path.isdir(directory):
+    print("creating %s folder" % directory)
+    os.mkdir(directory)
+print("your directory is", directory)
 HT_threshold = int(args.ht)  # define the criteria for Horizontal Transfer
 threshold = int(args.n)  # how many proteins to process, if not defined process all of them
 api_key = args.api_key
