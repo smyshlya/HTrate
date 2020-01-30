@@ -3,18 +3,32 @@ from classes.classes import MappingTable, IdenticalProtein
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import argparse
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument("file", default="nothing", help="This is the input file")
+parser.add_argument("--ht", default=2, help="threshold number of genera for HT detection; default is 2")
+parser.add_argument("--n", default=0, help="number of proteins to retrieve from the mapping table; if 0 retrieves all (default)")
+parser.add_argument("--api_key", default="none", help="This is your api_key to access NCBI")
+args = parser.parse_args()
+filename = args.file
 
 count, count_all, count_HT = 0, 0, 0
-all_count, all_identical_array, all_identical_lens, all_genera = [], [], [], []
+all_count, all_identical_array, all_identical_lens, all_genera, ht_genera = [], [], [], [], []
 already_identical, dataframe_array, all_acc_numbers = [], [], []
 genera_number = {}
 
 # here we define input parameters: mapping table file, the only one we need for our analysis, HT threshold and protein number
-filename = "/Users/gera/Desktop/ICEs/tyrosine_recombinase/epsilon_15/distribution_analysis/TR_distribution/SXT/SXT.mapping_table"
+#filename = "/Users/gera/Desktop/ICEs/tyrosine_recombinase/epsilon_15/distribution_analysis/TR_distribution/SXT/SXT.mapping_table"
 directory = os.path.dirname(filename)
-HT_threshold = 2  # define the criteria for Horizontal Transfer
-threshold = 100  # how many proteins to process, if not defined process all of them
+HT_threshold = int(args.ht)  # define the criteria for Horizontal Transfer
+threshold = int(args.n)  # how many proteins to process, if not defined process all of them
+api_key = args.api_key
+print("input file is", filename)
+print("HT threshold is", HT_threshold)
+print("number of proteins to look at is", threshold)
+print("your api_key is", api_key)
 
 # here we will read the mapping table
 mapping_table = MappingTable(filename, threshold)
@@ -33,7 +47,7 @@ for acc_number in new_array:
         if os.path.isfile(identical_protein.file) and os.path.getsize(identical_protein.file) > 0:
             pass
         else:
-            identical_protein.download()
+            identical_protein.download(api_key)
             print("downloading",acc_number, count_all, "out of", mt_length)
         all_count.append(count)
 
@@ -45,6 +59,7 @@ for acc_number in new_array:
         if len(genera) > HT_threshold:
             dataframe_array.append(genera_number)
             all_acc_numbers.append(acc_number)
+            ht_genera.append(len(genera))
             count_HT += 1
         all_identical_lens.append(len(all_identical))
         all_genera.append(len(genera))
@@ -59,9 +74,12 @@ print("calculated HT rate is", count_HT/count)
 
 #  now we plot
 df = pd.DataFrame(dataframe_array, index=all_acc_numbers)
-df['Total'] = df.sum(axis=1)
-df.sort_values(['Total'], axis=0, ascending=False, inplace=True)
-df = df.drop('Total', axis=1)
+df['Total_genomes'] = df.sum(axis=1)
+df['Total_genera'] = ht_genera
+print("xoxoxo", len(ht_genera), ht_genera)
+df.sort_values(['Total_genera'], axis=0, ascending=False, inplace=True)
+df = df.drop(['Total_genera', 'Total_genomes'], axis=1)
+df = df.drop('Organism', axis=1)
 df.dropna(how='any', axis=1)
 print(df.head)
 df.plot.bar(stacked=True)
