@@ -4,8 +4,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import argparse
+import time
 
 
+start_time = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument("file", default="nothing", help="This is the input file")
 parser.add_argument("--ht", default=2, help="threshold number of genera for HT detection; default is 2")
@@ -73,14 +75,21 @@ print("total number of proteins is", count_all, "of them", count, "are unique")
 print("calculated HT rate is", count_HT/count)
 
 #  now we plot
-df = pd.DataFrame(dataframe_array, index=all_acc_numbers)
-df['Total_genomes'] = df.sum(axis=1)
-df['Total_genera'] = ht_genera
-print("xoxoxo", len(ht_genera), ht_genera)
-df.sort_values(['Total_genera'], axis=0, ascending=False, inplace=True)
-df = df.drop(['Total_genera', 'Total_genomes'], axis=1)
-df = df.drop('Organism', axis=1)
-df.dropna(how='any', axis=1)
-print(df.head)
-df.plot.bar(stacked=True)
-plt.show()
+if bool(dataframe_array):
+    df = pd.DataFrame(dataframe_array, index=all_acc_numbers)
+    df['Total_genomes'] = df.sum(axis=1)
+    df['Total_genera'] = ht_genera
+    print("xoxoxo", len(ht_genera), ht_genera)
+    df.sort_values(['Total_genera'], axis=0, ascending=False, inplace=True)
+    df = df.drop(['Total_genera', 'Total_genomes'], axis=1)
+    df = df.drop('Organism', axis=1)
+    df.dropna(how='any', axis=1)
+    print(df.head)
+    df.head(n=10).plot.bar(stacked=True)
+    df.to_csv(directory + "/out.csv")
+    print("Total time: %s seconds" % (time.time() - start_time))
+    plt.show()
+else:
+    print("No horizontally transferred proteins found")
+    print("Total time: %s seconds" % (time.time() - start_time))
+
