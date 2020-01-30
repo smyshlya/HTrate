@@ -1,6 +1,6 @@
 # HTrate
 
-A script that predict which bacterial proteins could have been horizontally transferred from a list of protein NCBI accession numbers (provided in the inputfile)
+A script that predicts, which bacterial proteins could have been horizontally transferred from a list of protein NCBI accession numbers (provided in the input file)
 ## Usage
 ```bash
 usage: HTrate.py [-h] [--ht HT] [--n N] [--api_key API_KEY] file
