@@ -13,10 +13,9 @@ class MappingTable:
         line = file.readline()
         while line:
             line = line.rstrip()
-            # print(line)
             my_array.append(line)
             count += 1
-            if count > self.threshold:
+            if count > self.threshold and self.threshold != 0:
                 break
             line = file.readline()
         file.close()
@@ -30,11 +29,10 @@ class IdenticalProtein:
         self.folder = folder
         self.file = folder + "/" + self.accession_number+".ip"
 
-    def download(self):
-        api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
+    def download(self, api_key):
+        #api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
         request = "efetch -db protein -id " + self.accession_number + " -format ipg -api_key " + api_key + " > " + self.file
         os.system(request)
-        # print("requesting:", request)
 
     def parse_identical_protein(self):
         file = open(self.file, "r")
