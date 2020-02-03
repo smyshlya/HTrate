@@ -97,4 +97,3 @@ if bool(dataframe_array):
 else:
     print("No horizontally transferred proteins found")
     print("Total time: %s seconds" % (time.time() - start_time))
-
