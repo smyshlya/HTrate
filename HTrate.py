@@ -11,7 +11,8 @@ start_time = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument("file", default="nothing", help="This is the input file")
 parser.add_argument("--ht", default=2, help="threshold number of genera for HT detection; default is 2")
-parser.add_argument("--n", default=0, help="number of proteins to retrieve from the mapping table; if 0 retrieves all (default)")
+parser.add_argument("--n", default=0, help="number of proteins to retrieve from the mapping table; "
+                                           "if 0 retrieves all (default)")
 parser.add_argument("--api_key", default="none", help="This is your api_key to access NCBI")
 args = parser.parse_args()
 filename = args.file
@@ -21,8 +22,9 @@ all_count, all_identical_array, all_identical_lens, all_genera, ht_genera = [], 
 already_identical, dataframe_array, all_acc_numbers = [], [], []
 genera_number = {}
 
-# here we define input parameters: mapping table file, the only one we need for our analysis, HT threshold and protein number
-#filename = "/Users/gera/Desktop/ICEs/tyrosine_recombinase/epsilon_15/distribution_analysis/TR_distribution/SXT/SXT.mapping_table"
+# here we define input parameters: mapping table file, the only one we need for our analysis,
+# HT threshold and protein number
+
 filename = os.path.abspath(filename)
 directory = os.path.dirname(filename) + "/ip"
 if not os.path.isdir(directory):
@@ -55,7 +57,7 @@ for acc_number in new_array:
             pass
         else:
             identical_protein.download(api_key)
-            print("downloading",acc_number, count_all, "out of", mt_length)
+            print("downloading", acc_number, count_all, "out of", mt_length)
         all_count.append(count)
 
 # we open the IP file and remove all instances of the protein from the mapping table
@@ -91,9 +93,10 @@ if bool(dataframe_array):
     df.dropna(how='any', axis=1)
     print(df.head)
     df.head(n=10).plot.bar(stacked=True)
+           # place text at the end of bar (subtracting 47000 from x, and 0.1 from y to make it fit within the bar)
+    plt.annotate("xoxoxo", xy=(3, 200), color='black')
     df.to_csv(directory + "/out.csv")
-    print("Total time: %s seconds" % (time.time() - start_time))
     plt.show()
 else:
     print("No horizontally transferred proteins found")
-    print("Total time: %s seconds" % (time.time() - start_time))
+print("Total time: %s seconds" % (time.time() - start_time))
