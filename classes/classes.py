@@ -1,6 +1,7 @@
 import os
 import subprocess
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 class MappingTable:
@@ -83,7 +84,7 @@ class ProteinInstance:
                 if len(my_list) > 1:
                     try: biosample = my_list[1]
                     except: raise Exception('Problem with '+line)
-                    print("found "+biosample)
+                    #print("found "+biosample)
             line = file.readline()
         file.close()
         return biosample
@@ -146,12 +147,45 @@ class BioSample:
         else:
             return False
 
-    def plot_info(self, df, value):
-        plt.figure(figsize=(20, 8))
-        graph = df[value].groupby(df[value]).count()
-        graph.sort_values(axis=0, ascending=False, inplace=True)
-        # df['collection_date'] = pd.to_datetime(df['collection_date'], errors='coerce')
-        graph = graph.head(n=30)
-        graph.plot(kind="bar")
+    def plot_info(self, df, value, an):
+        new_df = pd.DataFrame()
+#        graph = pd.Series()
+        for key in df:
+            if value == "collection_date":
+                df[key][value] = pd.to_datetime(df[key][value], errors='coerce', utc=True)
+                # utc=True to avoid errors on Tz-aware
+                graph = df[key][value].groupby(df[key][value].dt.year).count()
+
+            else:
+                graph = df[key][value].groupby(df[key][value]).count()
+            #print("graph", graph)
+            graph = graph.to_frame()
+            new_df = pd.concat([new_df, graph], axis=1)
+            new_df = new_df.rename(columns={value: key})
+            #print(new_df.dtypes)
+            #print(new_df)
+            if value == "collection_date":
+                for year in range(1948, 2020):
+                    year = float('%.1f' % (year))
+             #       print("looking at year", year)
+                    if not year in new_df.index:
+              #          print("couldnt find year", year)
+                        empty_series = pd.Series(name = year)
+                        new_df = new_df.append(empty_series)
+                        #print("appending ", new_df)
+            #print("new", new_df)
+        new_df = new_df.fillna(0)
+        new_df = new_df.sort_index()
+        print(new_df.head)
+        if value == "collection_date":
+            new_df.iloc[0:73].plot(kind="line", figsize=(10, 4), xticks=range(1948, 2019), rot=90)
+            plt.yscale("log")
+        else:
+            #new_df.rename(columns={value:an},  inplace=True)
+            print("wwww", new_df)
+            new_df['Total'] = new_df.sum(axis=1)
+            new_df.sort_values(by='Total', inplace=True, ascending=False)
+            new_df = new_df.drop(['Total'], axis=1)
+            new_df.head(n=30).plot(kind="bar", figsize=(10, 4), rot=90, fontsize='small')
         plt.draw()
-        plt.pause(0.001)
+        plt.pause(0.1)
