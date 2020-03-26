@@ -46,11 +46,15 @@ for acc_number in acc_number_array:  # now we iterate through multiple sequences
             df[acc_number] = df[acc_number].append(info, ignore_index=True)  # add a row to dataframe
 #            print("MY FRAME:", df[acc_number])
             count += 1
-        if not count % 50:
+        if not count % 100:
             plt.close()
             df[acc_number].info()
             print(df[acc_number].shape)
-            bs.plot_info(df, 'host', acc_number)
+            print(df[acc_number])
+            bs.plot_info(df, 'collection_date', "all")  # last argument should be  "all" for all the years, or a specific year
 #        print("count"+str(count)+" and "+str(count2)+" out of "+str(len(all_accession_numbers)))
-
+        outfile = acc_number + ".csv"
+    bs.plot_info(df, 'collection_date', "all")
+    print("writing ", outfile)
+    df[acc_number].to_csv(outfile, index=False)
 plt.savefig("result.svg", format = 'svg')

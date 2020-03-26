@@ -2,6 +2,7 @@ import os
 import subprocess
 import matplotlib.pyplot as plt
 import pandas as pd
+import re
 
 
 class MappingTable:
@@ -130,7 +131,16 @@ class BioSample:
                 info['isolation_source'] = my_list[1]
             elif "/collection date" in line:
                 my_list = line.split('=')
-                info['collection_date'] = my_list[1]
+                my_list2=["",""]
+                p = re.compile(r'\d+\/\d+')
+                if p.findall(my_list[1]):
+                    print("finding them all", p.findall(my_list[1]))
+                    my_list2 = my_list[1].split('/')
+                    info['collection_date'] = my_list2[1]
+                # if my_list[1]
+                else:
+                    info['collection_date'] = my_list[1]
+
             elif " /sample type" in line:
                 my_list = line.split('=')
                 info['sample_type'] = my_list[1]
@@ -147,10 +157,23 @@ class BioSample:
         else:
             return False
 
-    def plot_info(self, df, value, an):
+    def plot_info(self, df, value, input_year):
         new_df = pd.DataFrame()
 #        graph = pd.Series()
         for key in df:
+            df[key]["collection_date_formatted"] = pd.to_datetime(df[key]['collection_date'], errors='coerce', utc=True)
+            try:
+                input_year
+            except:
+                pass
+
+            else:
+                if input_year != "all":
+                    print("YEAR is defined:", input_year)
+                    df[key]['collection_date'] = pd.to_datetime(df[key]['collection_date'], errors='coerce', utc=True)
+                    df[key] = df[key][df[key]['collection_date'].dt.year == input_year]
+    #                df[key]=df[key].loc[df[key]['collection_date'] == input_year]
+
             if value == "collection_date":
                 df[key][value] = pd.to_datetime(df[key][value], errors='coerce', utc=True)
                 # utc=True to avoid errors on Tz-aware
@@ -165,7 +188,7 @@ class BioSample:
             #print(new_df.dtypes)
             #print(new_df)
             if value == "collection_date":
-                for year in range(1948, 2020):
+                for year in range(1932, 2020):
                     year = float('%.1f' % (year))
              #       print("looking at year", year)
                     if not year in new_df.index:
@@ -178,7 +201,7 @@ class BioSample:
         new_df = new_df.sort_index()
         print(new_df.head)
         if value == "collection_date":
-            new_df.iloc[0:73].plot(kind="line", figsize=(10, 4), xticks=range(1948, 2019), rot=90)
+            new_df.iloc[0:100].plot(kind="line", figsize=(10, 4), xticks=range(1932, 2020), rot=90)
             plt.yscale("log")
         else:
             #new_df.rename(columns={value:an},  inplace=True)
