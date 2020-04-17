@@ -48,16 +48,19 @@ class IdenticalProtein:
         while line:
             line = line.rstrip()
             my_list = (line.split('\t'))
-            specie = (my_list[8])
-            genera_array = (specie.split(' '))
-            genera = genera_array[0]
-            if genera in all_genera:
-                genera_number[genera] += 1
+            if len(my_list)>8:
+                specie = (my_list[8])
+                genera_array = (specie.split(' '))
+                genera = genera_array[0]
+                if genera in all_genera:
+                    genera_number[genera] += 1
+                else:
+                    genera_number[genera] = 1
+                    all_genera.append(genera)
+                all_accession_numbers.append(my_list[6])
+                count += 1
             else:
-                genera_number[genera] = 1
-                all_genera.append(genera)
-            all_accession_numbers.append(my_list[6])
-            count += 1
+                print("Ipg:", self.accession_number, "is broken")
             line = file.readline()
         file.close()
         return all_accession_numbers, all_genera, genera_number
@@ -67,6 +70,10 @@ class ProteinInstance:
     def __init__(self, accession_number, folder):
         self.an = accession_number
         self.file = folder + "/" + self.an + ".txt"
+        if "WP_" in accession_number:
+            self.type = "nr RefSeq"
+        else:
+            self.type = "usual"
 
     def download(self, api_key):
         # api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
@@ -100,12 +107,13 @@ class ProteinInstance:
 
         return
 
+
 class BioSample:
 
-    def __init__(self, biosample_id, folder):
+    def __init__(self, biosample_id, folder, accession_number):
         self.an = biosample_id
         self.file = folder + "/" + self.an + ".biosample"
-
+        self.prot_an = accession_number
     def download(self, api_key):
         if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
             print("Biosample file"+self.file+"already exists")
@@ -117,37 +125,41 @@ class BioSample:
             stdout, stderr = process.communicate()
 
     def get_info(self):
-        file = open(self.file, "r")
         info = {'location': 'NA', 'isolation_source': 'NA', 'collection_date': 'NA', 'sample_type': 'NA'}
-        line = file.readline()
-        while line:
-            line = line.rstrip()
-            line = line.replace("\"", "")
-            if "/geographic location" in line:
-                my_list = line.split('=')
-                info['location'] = my_list[1]
-            elif "/isolation source" in line:
-                my_list = line.split('=')
-                info['isolation_source'] = my_list[1]
-            elif "/collection date" in line:
-                my_list = line.split('=')
-                my_list2=["",""]
-                p = re.compile(r'\d+\/\d+')
-                if p.findall(my_list[1]):
-                    print("finding them all", p.findall(my_list[1]))
-                    my_list2 = my_list[1].split('/')
-                    info['collection_date'] = my_list2[1]
-                # if my_list[1]
-                else:
-                    info['collection_date'] = my_list[1]
-
-            elif " /sample type" in line:
-                my_list = line.split('=')
-                info['sample_type'] = my_list[1]
-            elif " /host" in line:
-                my_list = line.split('=')
-                info['host'] = my_list[1]
+        if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
+            file = open(self.file, "r")
             line = file.readline()
+            while line:
+                line = line.rstrip()
+                line = line.replace("\"", "")
+                info['biosample'] = self.an
+                info['accession_number'] = self.prot_an
+                if "/geographic location" in line:
+                    my_list = line.split('=')
+                    info['location'] = my_list[1]
+                elif "/isolation source" in line:
+                    my_list = line.split('=')
+                    info['isolation_source'] = my_list[1]
+                elif "/collection date" in line:
+                    my_list = line.split('=')
+                    my_list2=["",""]
+                    p = re.compile(r'\d+\/\d+')
+                    if p.findall(my_list[1]):  # this is because times like "1900/1952" can not be transformed to Date type,
+                        # so I have to cut them to just "1952"
+                        print("finding them all", p.findall(my_list[1]))
+                        my_list2 = my_list[1].split('/')
+                        info['collection_date'] = my_list2[1]
+                    # if my_list[1]
+                    else:
+                        info['collection_date'] = my_list[1]
+
+                elif " /sample type" in line:
+                    my_list = line.split('=')
+                    info['sample_type'] = my_list[1]
+                elif " /host" in line:
+                    my_list = line.split('=')
+                    info['host'] = my_list[1]
+                line = file.readline()
         return info
         file.close()
 
@@ -159,53 +171,39 @@ class BioSample:
 
     def plot_info(self, df, value, input_year):
         new_df = pd.DataFrame()
-#        graph = pd.Series()
+        formatted_date = "collection_date_formatted"
         for key in df:
-            df[key]["collection_date_formatted"] = pd.to_datetime(df[key]['collection_date'], errors='coerce', utc=True)
+            if 'collection_date' in df[key].columns:
+                print("collection date column:", df[key]['collection_date'])
+                df[key][formatted_date] = pd.to_datetime(df[key]['collection_date'], errors='coerce', utc=True)
+            # utc=True to avoid errors on Tz-aware
             try:
                 input_year
             except:
                 pass
-
             else:
                 if input_year != "all":
-                    print("YEAR is defined:", input_year)
-                    df[key]['collection_date'] = pd.to_datetime(df[key]['collection_date'], errors='coerce', utc=True)
-                    df[key] = df[key][df[key]['collection_date'].dt.year == input_year]
-    #                df[key]=df[key].loc[df[key]['collection_date'] == input_year]
-
+                    df[key] = df[key][df[key][formatted_date].dt.year == input_year]
             if value == "collection_date":
-                df[key][value] = pd.to_datetime(df[key][value], errors='coerce', utc=True)
-                # utc=True to avoid errors on Tz-aware
-                graph = df[key][value].groupby(df[key][value].dt.year).count()
 
+                graph = df[key][formatted_date].groupby(df[key][formatted_date].dt.year).count()
             else:
                 graph = df[key][value].groupby(df[key][value]).count()
-            #print("graph", graph)
             graph = graph.to_frame()
             new_df = pd.concat([new_df, graph], axis=1)
-            new_df = new_df.rename(columns={value: key})
-            #print(new_df.dtypes)
-            #print(new_df)
+            new_df = new_df.rename(columns={value: key, formatted_date: key})
             if value == "collection_date":
                 for year in range(1932, 2020):
                     year = float('%.1f' % (year))
-             #       print("looking at year", year)
                     if not year in new_df.index:
-              #          print("couldnt find year", year)
                         empty_series = pd.Series(name = year)
                         new_df = new_df.append(empty_series)
-                        #print("appending ", new_df)
-            #print("new", new_df)
         new_df = new_df.fillna(0)
         new_df = new_df.sort_index()
-        print(new_df.head)
         if value == "collection_date":
             new_df.iloc[0:100].plot(kind="line", figsize=(10, 4), xticks=range(1932, 2020), rot=90)
             plt.yscale("log")
         else:
-            #new_df.rename(columns={value:an},  inplace=True)
-            print("wwww", new_df)
             new_df['Total'] = new_df.sum(axis=1)
             new_df.sort_values(by='Total', inplace=True, ascending=False)
             new_df = new_df.drop(['Total'], axis=1)

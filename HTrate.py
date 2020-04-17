@@ -2,7 +2,6 @@ import os
 from classes.classes import MappingTable, IdenticalProtein
 import matplotlib.pyplot as plt
 import pandas as pd
-import numpy as np
 import argparse
 import time
 
@@ -44,7 +43,7 @@ mapping_table = MappingTable(filename, threshold)
 new_array = mapping_table.parse_mapping_table()
 mt_length = len(new_array)
 print("will process", mt_length, "accessions..")
-
+unique = []
 # now we will download the identical protein report (IP file)
 for acc_number in new_array:
     #print(acc_number)
@@ -59,7 +58,8 @@ for acc_number in new_array:
             identical_protein.download(api_key)
             print("downloading", acc_number, count_all, "out of", mt_length)
         all_count.append(count)
-
+        unique.append(acc_number)
+#        print("unique accessions: ", len(unique))
 # we open the IP file and remove all instances of the protein from the mapping table
         try:
             all_identical, genera, genera_number = identical_protein.parse_identical_protein()
@@ -99,4 +99,9 @@ if bool(dataframe_array):
     plt.show()
 else:
     print("No horizontally transferred proteins found")
+
+
+with open(filename+".unique", 'w') as f:
+    for item in unique:
+        f.write("%s\n" % item)
 print("Total time: %s seconds" % (time.time() - start_time))
