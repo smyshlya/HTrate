@@ -60,7 +60,8 @@ class IdenticalProtein:
                 all_accession_numbers.append(my_list[6])
                 count += 1
             else:
-                print("Ipg:", self.accession_number, "is broken")
+#                print("Ipg:", self.accession_number, "is broken")
+                 pass
             line = file.readline()
         file.close()
         return all_accession_numbers, all_genera, genera_number
@@ -79,6 +80,10 @@ class ProteinInstance:
         # api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
         request = "efetch -db protein -id " + self.an + " -format gb -api_key " + api_key + " > " + self.file
         os.system(request)
+
+    @staticmethod
+    def download_multiple(protein_instances, api_key):
+        print("downloading", len(protein_instances), " proteins")
 
     def get_biosample(self):
         file = open(self.file, "r")
