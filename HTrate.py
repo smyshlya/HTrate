@@ -77,31 +77,37 @@ for acc_number in new_array:
         print(count_all, "out of", mt_length, " is processed", end='\r')
     else:
         print(count_all, "out of", mt_length, " is already in identical", end='\r')
-
-print("total number of proteins is", count_all, "of them", count, "are unique")
-print("calculated HT rate is", count_HT/count)
+    if not count % 10:
+        plt.close()
 
 #  now we plot
-if bool(dataframe_array):
-    df = pd.DataFrame(dataframe_array, index=all_acc_numbers)
-    df['Total_genomes'] = df.sum(axis=1)
-    df['Total_genera'] = ht_genera
-    print("xoxoxo", len(ht_genera), ht_genera)
-    df.sort_values(['Total_genera'], axis=0, ascending=False, inplace=True)
-    df = df.drop(['Total_genera', 'Total_genomes'], axis=1)
-    df = df.drop('Organism', axis=1)
-    df.dropna(how='any', axis=1)
-    print(df.head)
-    df.head(n=10).plot.bar(stacked=True)
-           # place text at the end of bar (subtracting 47000 from x, and 0.1 from y to make it fit within the bar)
-    plt.annotate("xoxoxo", xy=(3, 200), color='black')
-    df.to_csv(directory + "/out.csv")
-    plt.show()
-else:
-    print("No horizontally transferred proteins found")
+        if bool(dataframe_array):
+            df = pd.DataFrame(dataframe_array, index=all_acc_numbers)
+            df['Total_genomes'] = df.sum(axis=1)
+            df['Total_genera'] = ht_genera
+            print("xoxoxo", len(ht_genera), ht_genera)
+        #    df.sort_values(['Total_genera'], axis=0, ascending=False, inplace=True)
+        #    df = df.drop(['Total_genera', 'Total_genomes'], axis=1)
+            df = df.drop('Organism', axis=1)
+            df.dropna(how='any', axis=1)
+            print(df.head)
+        #    df.head(n=10).plot.bar(stacked=True)
+            df['Total_genera'].plot(kind="line", rot=90)
+        #    plt.xticks(new_array)
+                   # place text at the end of bar (subtracting 47000 from x, and 0.1 from y to make it fit within the bar)
+        #    plt.annotate("xoxoxo", xy=(3, 200), color='black')
+            df.to_csv(directory + "/out.csv")
+            plt.draw()
+            plt.pause(0.1)
+        else:
+            print("No horizontally transferred proteins found")
 
 
 with open(filename+".unique", 'w') as f:
     for item in unique:
         f.write("%s\n" % item)
+print("total number of proteins is", count_all, "of them", count, "are unique")
+print("calculated HT rate is", count_HT/count)
+
 print("Total time: %s seconds" % (time.time() - start_time))
+
