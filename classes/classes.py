@@ -3,6 +3,8 @@ import subprocess
 import matplotlib.pyplot as plt
 import pandas as pd
 import re
+from Bio import Entrez
+import sys
 
 
 class MappingTable:
@@ -82,8 +84,53 @@ class ProteinInstance:
         os.system(request)
 
     @staticmethod
-    def download_multiple(protein_instances, api_key):
+    def download_multiple(protein_instances, api_key, debug):  # adopted mostly from https://www.biostars.org/p/66921/
+        # and https://biopython.org/docs/1.74/api/Bio.Entrez.html
+        #        protein_instances = ["VTO26435.1", "AVD07301.1", "VUX23898.1"]
         print("downloading", len(protein_instances), " proteins")
+        protein_instances = protein_instances[30:40]
+        n = 3
+        f = open("biosample_mapping_table.txt", "w+")
+        corr = open("an_corrupted.txt", "w+")
+        for i in range(0, len(protein_instances), n):
+            new_protein_instances = protein_instances[i:i + n]
+            print("looking at seqs from ", i, " to ", i+n)
+            print(new_protein_instances)
+            Entrez.email = "smyshlya@embl.de"
+            if debug:
+                print(new_protein_instances)
+            request = Entrez.epost("protein", id=",".join(new_protein_instances),
+                                   email="smyshlya@embl.de", api_key=api_key)
+            print(",".join(new_protein_instances))
+            try:
+                result = Entrez.read(request, validate=False, escape=True)
+                print("good request is", request)
+            except:
+                print("got problems with these accessions")
+                print("bad request is", request)
+            webEnv = result["WebEnv"]
+            print("new WebEnv is", webEnv)
+            queryKey = result["QueryKey"]
+            if debug:
+                print("posting successful: ", result)
+                print("webEnv is", webEnv)
+                print("queryKey is ", queryKey)
+            records_handle = Entrez.efetch(db='protein', retmax=n,
+                                           webenv=webEnv, query_key=queryKey,
+                                           email="smyshlya@embl.de", api_key=api_key,
+                                           retmode="xml")
+            records = Entrez.parse(records_handle)
+            for record in records:
+                if 'GBSeq_xrefs' in record.keys():
+                    xref = record['GBSeq_xrefs']
+                    for dbs in xref:
+                        if 'BioSample' in dbs['GBXref_dbname']:
+                            f.write("%s\t%s\n" % (record['GBSeq_locus'], dbs['GBXref_id']))
+                else:
+                    print("record has no GBSeq_xrefs")
+                corr.write("some of accesion from %s to %s are corrupted\n" %(i, i+n) )
+        records_handle.close
+
 
     def get_biosample(self):
         file = open(self.file, "r")

@@ -5,6 +5,7 @@ import pandas as pd
 import time
 
 
+debug = False
 start_time = time.time()
 directory = "/Users/gera/PycharmProjects/HTrate/ip"
 map_table_file = open("PolA_mapping_table.txt.unique", "r")
@@ -61,20 +62,23 @@ for keys in all_acc_numbers_dict:
 # DOWNLOADING ALL PROTEIN FILES
 all_nonRef_acc_number = []
 all_uniq_prots = []
+print("checking if all proteins are downloaded")
 for accession_number in all_acc_numbers:  # here we iterate through all accessions of one sequence
     unique_protein = ProteinInstance(accession_number, an_folder)
     if "nr RefSeq" not in unique_protein.type:
+        if debug:
+            print(accession_number, "is not Ref")
         all_nonRef_acc_number.append(accession_number)
         if not unique_protein.exists():  # download protein gb if doesn't exist already and if it is not WP_
             print("downloading", accession_number)
             unique_protein.download(api_key)
-        all_uniq_prots.append(unique_protein)
-print(all_nonRef_acc_number)
+        all_uniq_prots.append(accession_number)
+print("done uploading\n")
 print("Total number of all accession number to look at is ", len(all_acc_numbers))
 print("Total number of non-reference acession numbers is", len(all_uniq_prots))
 print("Trying to download multiple...")
-print(all_uniq_prots)
-ProteinInstance.download_multiple(all_uniq_prots, api_key)  # trying now to do batch download
+#print(all_uniq_prots)
+ProteinInstance.download_multiple(all_uniq_prots, api_key, debug)  # trying now to do batch download
 
 
 # DOWNLOADING ALL CORRESPONDING BIO SAMPLE FILES
