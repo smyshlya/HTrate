@@ -87,25 +87,22 @@ class ProteinInstance:
     def download_multiple(protein_instances, api_key, debug, what_you_want, folder):  # adopted mostly
         # from https://www.biostars.org/p/66921 and https://biopython.org/docs/1.74/api/Bio.Entrez.html
         #        protein_instances = ["VTO26435.1", "AVD07301.1", "VUX23898.1"]
-
         print("downloading", len(protein_instances), " proteins")
-        #protein_instances = protein_instances[30:40]
-        n = 50
+        n = 500
         f = open("biosample_mapping_table.txt", "w+")
         corr = open("an_corrupted.txt", "w+")
-
+        an_to_ref = {}
+        an_to_all_an = {}
+        deref_file = folder + "/DBderef.txt"
+        deref = open(deref_file, "a+")
         for i in range(0, len(protein_instances), n):
-            file = folder + "/" + str(i) +"-"+str(i+n)+".txt"
-            #out = open(file, "w+")
             new_protein_instances = protein_instances[i:i + n]
             print("looking at seqs from ", i, " to ", i+n)
-            print(new_protein_instances)
             Entrez.email = "smyshlya@embl.de"
             if debug:
                 print(new_protein_instances)
             request = Entrez.epost("protein", id=",".join(new_protein_instances),
                                    email="smyshlya@embl.de", api_key=api_key)
-            print(",".join(new_protein_instances))
             try:
                 result = Entrez.read(request, validate=False)
                 print("good request is", request)
@@ -123,37 +120,62 @@ class ProteinInstance:
                 rettype="ipg"
                 retmode="text"
             else:
-                rettype = "native" # could be invalid
+                rettype = "native"  # could be invalid
                 retmode = "xml"
             records_handle = Entrez.efetch(db='protein', retmax=n,
                                            webenv=webEnv, query_key=queryKey,
                                            email="smyshlya@embl.de", api_key=api_key,
                                            retmode=retmode,
-                                           rettype=rettype)
+                                           rettype=rettype
+                                           )
+            all_lines = []
             if "identical" in what_you_want:
                 line = records_handle.readline()
                 line = records_handle.readline()
                 while line:
                     line = line.rstrip()
-                    for p in new_protein_instances:
+                    for p in new_protein_instances:  # there's a bit of a big now for two identical proteins being in
+                        # the same genome, could get problematic
                         if p in line:
-                            #file = folder + "/" + str(i) + "-" + str(i + n) + ".txt"
-                            new_file = folder + "/"+p+".ip"
-                            print("writing into ", new_file)
+                            my_list1 = line.split('\t')
+                            ip_unique_number = my_list1[0]
+                            try:
+                                new_out.writelines(all_lines)
+                            except:
+                                pass
+                            all_lines = []
+                            new_file = folder + "/" + p + ".ip"
                             new_out = open(new_file, "w+")
-                            new_out.write("%s\n"%line)
+                            all_lines.append(line+"\n")
+                            try:
+                                deref.write("%s:%s\n" % (star, an_to_all_an[star]))
+                            except:
+                                pass
                             star = p
+                            an_to_all_an[star] = []
+                        elif "WP_" in line:
+                            if star in an_to_ref:
+                                pass
+                            else:
+                                my_list = line.split('\t')
+                                an_to_ref[star] = my_list[6]
+                                an_to_all_an[star].append(my_list[6])
                         else:
-                            if p == star:
-                                new_out.write("%s\n" % line)
-                    line = records_handle.readline()
-
+                            if (p == star) & (ip_unique_number in line):
+                                all_lines.append(line+"\n")
+                                my_list = line.split('\t')
+                                an_to_all_an[star].append(my_list[6])
+                    try:
+                        line = records_handle.readline()
+                    except:
+                        pass
             else:
                 records = Entrez.parse(records_handle)
                 for record in records:
                     print("record has following keys:", record.keys())
                     if 'GBSeq_xrefs' in record.keys():
                         xref = record['GBSeq_xrefs']
+                        print("xref is ", xref)
                         for dbs in xref:
                             if 'BioSample' in dbs['GBXref_dbname']:
                                 f.write("%s\t%s\n" % (record['GBSeq_locus'], dbs['GBXref_id']))
@@ -161,6 +183,7 @@ class ProteinInstance:
                         print("record has no GBSeq_xrefs")
                     corr.write("some of accesion from %s to %s are corrupted\n" %(i, i+n) )
             records_handle.close
+        deref.close()
 
 
     def get_biosample(self):
@@ -175,7 +198,6 @@ class ProteinInstance:
                 if len(my_list) > 1:
                     try: biosample = my_list[1]
                     except: raise Exception('Problem with '+line)
-                    #print("found "+biosample)
             line = file.readline()
         file.close()
         return biosample

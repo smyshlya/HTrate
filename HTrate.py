@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import argparse
 import time
-
+import re
 
 start_time = time.time()
 parser = argparse.ArgumentParser()
@@ -20,6 +20,7 @@ count, count_all, count_HT = 0, 0, 0
 all_count, all_identical_array, all_identical_lens, all_genera, ht_genera = [], [], [], [], []
 already_identical, dataframe_array, all_acc_numbers = [], [], []
 genera_number = {}
+debug = True
 
 # here we define input parameters: mapping table file, the only one we need for our analysis,
 # HT threshold and protein number
@@ -43,31 +44,44 @@ mapping_table = MappingTable(filename, threshold)
 new_array = mapping_table.parse_mapping_table()
 mt_length = len(new_array)
 print("will process", mt_length, "accessions..")
+
 unique = []
 to_download = []
+derefed = []
 # now we will download the identical protein report (IP file)
 for acc_number in new_array:
-    #print(acc_number)
     count_all += 1
     # check if corresponding accession number does not exist in previously processed IdenticalProtein
     if acc_number not in already_identical:
         count += 1
-        #print(count)
         identical_protein = IdenticalProtein(acc_number, directory)
         if os.path.isfile(identical_protein.file) and os.path.getsize(identical_protein.file) > 0:
-            pass
+            derefed.append(acc_number)
         else:
-            #print(acc_number, ": adding accession to download list")
-            to_download.append(acc_number)
-#            identical_protein.download(api_key)
-            print("downloading", acc_number, count_all, "out of", mt_length)
+            request = "grep -w "+acc_number+" "+directory+"/"+"DBderef.txt"
+            result234 = os.popen(request).read()
+            if not result234:
+                to_download.append(acc_number)
+                derefed.append(acc_number)
+            else:
+                try:
+                    print("grep worked, trying now to find original accession")
+                    result = re.findall(r'(.*):.*', result234)
+                    print(result)
+                    derefed.append(result[0])
+                except ValueError:
+                    print("cant't find!!!")
+    else:
+        derefed.append(acc_number)
 print("Total to download: ", len(to_download))
-
-ProteinInstance.download_multiple(to_download, api_key, True, "identical", directory)
-
+print("Initial to parse: ", len(new_array))
+print("Final to parse:", len(derefed))
+'''for k in derefed:
+    print("derefed are: ", k)'''
+ProteinInstance.download_multiple(to_download, api_key, debug, "identical", directory)
 
 #now parsing
-for acc_number in new_array:
+for acc_number in derefed:
     # print(acc_number)
     count_all += 1
     # check if corresponding accession number does not exist in previously processed IdenticalProtein
@@ -75,9 +89,6 @@ for acc_number in new_array:
     count += 1
     # print(count)
     identical_protein = IdenticalProtein(acc_number, directory)
-
-
-
     all_count.append(count)
     unique.append(acc_number)
 #        print("unique accessions: ", len(unique))
@@ -98,7 +109,7 @@ for acc_number in new_array:
     print(count_all, "out of", mt_length, " is processed", end='\r')
 #    else:
 #        print(count_all, "out of", mt_length, " is already in identical", end='\r')
-    if not count % 100:
+    if not count % 1000:
         plt.close()
 
 #  now we plot
@@ -106,12 +117,12 @@ for acc_number in new_array:
             df = pd.DataFrame(dataframe_array, index=all_acc_numbers)
             df['Total_genomes'] = df.sum(axis=1)
             df['Total_genera'] = ht_genera
-            print("xoxoxo", len(ht_genera), ht_genera)
+            #print("xoxoxo", len(ht_genera), ht_genera)
         #    df.sort_values(['Total_genera'], axis=0, ascending=False, inplace=True)
         #    df = df.drop(['Total_genera', 'Total_genomes'], axis=1)
         #    df = df.drop('Organism', axis=1)
             df.dropna(how='any', axis=1)
-            print(df.head)
+            #print(df.head)
         #    df.head(n=10).plot.bar(stacked=True)
             df['Total_genera'].plot(kind="line", rot=90)
         #    plt.xticks(new_array)
@@ -122,7 +133,10 @@ for acc_number in new_array:
             plt.pause(0.1)
         else:
             print("No horizontally transferred proteins found")
-
+df = pd.DataFrame(dataframe_array, index=all_acc_numbers)
+df['Total_genomes'] = df.sum(axis=1)
+df['Total_genera'] = ht_genera
+df.dropna(how='any', axis=1)
 df['Total_genera'].plot(kind="line", rot=90)
 plt.savefig("HTrate_result.svg", format = 'svg')
 with open(filename+".unique", 'w') as f:
@@ -132,4 +146,4 @@ print("total number of proteins is", count_all, "of them", count, "are unique")
 print("calculated HT rate is", count_HT/count)
 df.to_csv(directory + "/out.csv")
 print("Total time: %s seconds" % (time.time() - start_time))
-#plt.show()
+plt.show()

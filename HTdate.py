@@ -78,7 +78,7 @@ print("Total number of all accession number to look at is ", len(all_acc_numbers
 print("Total number of non-reference acession numbers is", len(all_uniq_prots))
 print("Trying to download multiple...")
 #print(all_uniq_prots)
-ProteinInstance.download_multiple(all_uniq_prots, api_key, debug)  # trying now to do batch download
+#ProteinInstance.download_multiple(all_uniq_prots, api_key, debug, "not", an_folder)  # trying now to do batch download
 
 
 # DOWNLOADING ALL CORRESPONDING BIO SAMPLE FILES
@@ -101,49 +101,47 @@ print("Trying to download all the biosamples again..")
 
 # now all_nonRef_acc_number is a list of accession numbers which we want to analyse
 
-'''
-    bs_id = ""
-    dates = []
-    an_with_dates = []
-    if merge:  # define if we treat input accession numbers as one data set or create separate data sets for each
-        ip_acc_number = "merged_accessions"
-    else:
-        df[ip_acc_number] = pd.DataFrame()  # data frame that stores all the information on all accessions for one sequence
-        count = 1
-    graph = pd.DataFrame()
-    count2 = 1
-    for accession_number in red_acc_numbers:  # here we iterate through all accessions of one sequence
-        unique_protein = ProteinInstance(accession_number, an_folder)
-        count2 += 1
-        if "nr RefSeq" not in unique_protein.type:
-            if not unique_protein.exists():  # download protein gb if doesn't exist already and if it is not WP_
-                unique_protein.download(api_key)
-            bs_id = unique_protein.get_biosample()  # retrieve biosample from gb file
-            if bs_id:  # check if biosample was found in gb (does not exist for reference genomes for example)
-                an_with_dates.append(accession_number)
-                bs = BioSample(bs_id, biosample_folder, accession_number)
-                if not bs.exists():  # check if biosample was already downloaded. otherwise download.
-                    bs.download(api_key)
-                info = bs.get_info()  # retrieve information from biosample
-                df[ip_acc_number] = df[ip_acc_number].append(info, ignore_index=True)  # add a row to dataframe
-    #            print("MY FRAME:", df[acc_number])
-                count += 1
-            if not count % 1000:
-                plt.close()
-                df[ip_acc_number].info()
-                print(df[ip_acc_number].shape)
-                print(df[ip_acc_number])
-                bs.plot_info(df, 'collection_date', 'all')  # last argument should be  "all" for all the years, or a specific year
-    #        print("count"+str(count)+" and "+str(count2)+" out of "+str(len(all_accession_numbers)))
-            outfile = ip_acc_number + ".csv"
+
+bs_id = ""
+dates = []
+an_with_dates = []
+if merge:  # define if we treat input accession numbers as one data set or create separate data sets for each
+    ip_acc_number = "merged_accessions"
+else:
+    df[ip_acc_number] = pd.DataFrame()  # data frame that stores all the information on all accessions for one sequence
+    count = 1
+graph = pd.DataFrame()
+count2 = 1
+for accession_number in red_acc_numbers:  # here we iterate through all accessions of one sequence
+    unique_protein = ProteinInstance(accession_number, an_folder)
+    count2 += 1
+    if "nr RefSeq" not in unique_protein.type:
+        if not unique_protein.exists():  # download protein gb if doesn't exist already and if it is not WP_
+            unique_protein.download(api_key)
+        bs_id = unique_protein.get_biosample()  # retrieve biosample from gb file
+        if bs_id:  # check if biosample was found in gb (does not exist for reference genomes for example)
+            an_with_dates.append(accession_number)
+            bs = BioSample(bs_id, biosample_folder, accession_number)
+            if not bs.exists():  # check if biosample was already downloaded. otherwise download.
+                bs.download(api_key)
+            info = bs.get_info()  # retrieve information from biosample
+            df[ip_acc_number] = df[ip_acc_number].append(info, ignore_index=True)  # add a row to dataframe
+#            print("MY FRAME:", df[acc_number])
+            count += 1
+        if not count % 1000:
+            plt.close()
+            df[ip_acc_number].info()
+            print(df[ip_acc_number].shape)
+            print(df[ip_acc_number])
+            bs.plot_info(df, 'collection_date', 'all')  # last argument should be  "all" for all the years, or a specific year
+#        print("count"+str(count)+" and "+str(count2)+" out of "+str(len(all_accession_numbers)))
+        outfile = ip_acc_number + ".csv"
 
 
-    #bs.plot_info(df, 'collection_date', "all")
-    print("writing ", outfile)
-    print("count is ", count)
-    df[ip_acc_number].to_csv(outfile, index=False)
-    if count > 10000:
-        break  # break here
+#bs.plot_info(df, 'collection_date', "all")
+print("writing ", outfile)
+print("count is ", count)
+df[ip_acc_number].to_csv(outfile, index=False)
 
 # DOWNLOADING ALL BIO SAMPLES FILES FROM NCBI
 # PARSING THE DOWNLOADED FILES
@@ -157,4 +155,3 @@ plt.savefig("result.svg", format = 'svg')
 print("Total time: %s seconds" % (time.time() - start_time))
 
 
-'''
