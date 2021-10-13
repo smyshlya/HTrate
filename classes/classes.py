@@ -7,6 +7,14 @@ from Bio import Entrez
 import sys
 
 
+class Nucleotide:
+    def __init__(self, accession_number):
+        self.an = accession_number
+        self.file = accession_number + ".gb"
+    def nuc_download(self, api_key, start, end, output):
+        request = "efetch -db nucleotide -id " + self.an + " -format gb -api_key " + api_key + " -seq_start " + start + " -seq_stop " + end + " > " + output
+        os.system(request)
+
 class MappingTable:
     def __init__(self, filename, threshold):
         self.filename = filename
@@ -47,13 +55,21 @@ class IdenticalProtein:
         all_accession_numbers = []  # LIST of all accession numbers belonging to this IP
         all_genera = []  # LIST of all genera where this IP is found
         genera_number = {}  # DICTIONARY: 'genera' -> number of instances
+        all_nucs = []  # list of all nucleotide sequences where the IP is found
+        copy_number = {}  # copy number per nucleotide sequence
         while line:
             line = line.rstrip()
             my_list = (line.split('\t'))
-            if len(my_list)>8:
+            if len(my_list) > 8:
                 specie = (my_list[8])
                 genera_array = (specie.split(' '))
                 genera = genera_array[0]
+                nuc = (my_list[2])
+                if nuc in all_nucs:
+                    copy_number[nuc] += 1
+                else:
+                    copy_number[nuc] = 1
+                    all_nucs.append(nuc)
                 if genera in all_genera:
                     genera_number[genera] += 1
                 else:
@@ -66,7 +82,7 @@ class IdenticalProtein:
                  pass
             line = file.readline()
         file.close()
-        return all_accession_numbers, all_genera, genera_number
+        return all_accession_numbers, all_genera, genera_number, copy_number
 
 
 class ProteinInstance:
@@ -78,6 +94,8 @@ class ProteinInstance:
         else:
             self.type = "usual"
 
+
+
     def download(self, api_key):
         # api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
         request = "efetch -db protein -id " + self.an + " -format gb -api_key " + api_key + " > " + self.file
@@ -88,7 +106,7 @@ class ProteinInstance:
         # from https://www.biostars.org/p/66921 and https://biopython.org/docs/1.74/api/Bio.Entrez.html
         #        protein_instances = ["VTO26435.1", "AVD07301.1", "VUX23898.1"]
         print("downloading", len(protein_instances), " proteins")
-        n = 500
+        n = 50
         f = open("biosample_mapping_table.txt", "w+")
         corr = open("an_corrupted.txt", "w+")
         an_to_ref = {}
@@ -102,7 +120,7 @@ class ProteinInstance:
             if debug:
                 print(new_protein_instances)
             request = Entrez.epost("protein", id=",".join(new_protein_instances),
-                                   email="smyshlya@embl.de", api_key=api_key)
+                                   email="georgy.smyshlyaev@unige.ch", api_key=api_key)
             try:
                 result = Entrez.read(request, validate=False)
                 print("good request is", request)

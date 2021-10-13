@@ -57,7 +57,9 @@ for acc_number in new_array:
         identical_protein = IdenticalProtein(acc_number, directory)
         if os.path.isfile(identical_protein.file) and os.path.getsize(identical_protein.file) > 0:
             derefed.append(acc_number)
+#            print("++++")
         else:
+            print(count)
             request = "grep -w "+acc_number+" "+directory+"/"+"DBderef.txt"
             result234 = os.popen(request).read()
             if not result234:
@@ -78,8 +80,12 @@ print("Initial to parse: ", len(new_array))
 print("Final to parse:", len(derefed))
 '''for k in derefed:
     print("derefed are: ", k)'''
-ProteinInstance.download_multiple(to_download, api_key, debug, "identical", directory)
-
+#ProteinInstance.download_multiple(to_download, api_key, debug, "identical", directory) # sometimes the batch download
+# does not work :( then you need to activate the next for loop. It does the same but MUCH slower
+for accession_number in to_download:
+    print("downloading "+accession_number)
+    unique_protein = IdenticalProtein(accession_number, directory)
+    unique_protein.download(api_key)
 #now parsing
 for acc_number in derefed:
     # print(acc_number)
@@ -94,9 +100,19 @@ for acc_number in derefed:
 #        print("unique accessions: ", len(unique))
 # we open the IP file and remove all instances of the protein from the mapping table
     try:
-        all_identical, genera, genera_number = identical_protein.parse_identical_protein()
+        all_identical, genera, genera_number, copy_number = identical_protein.parse_identical_protein()
     except:
         print(acc_number, "is damaged")
+    try:
+        max_key = max(copy_number, key=copy_number.get)
+        if copy_number[max_key] > 2:
+            print("for " + acc_number + " the maximum key is " + max_key + " : " + str(copy_number[max_key]))
+    except:
+        print("couldn't identify max for "+acc_number)
+
+    #for key in copy_number:
+    #    print(key, ' : ', copy_number[key])
+
     if len(genera) > HT_threshold:
         dataframe_array.append(genera_number)
         all_acc_numbers.append(acc_number)
