@@ -19,13 +19,16 @@ while line3:
     line3 = map_table_file.readline()
 #    print(count3, line3)
 #acc_number_array = ["VTO26435.1"]
-ip_acc_number_array = ["VTO26435.1", "AVD07301.1", "WP_001120888.1", "VUX23898.1"]
+#ip_acc_number_array = ["VTO26435.1", "AVD07301.1", "WP_001120888.1", "VUX23898.1"]
+ip_acc_number_array = ["WP_000954590.1"]
 #ip_acc_number_array = all_non_identical_proteins
 # "VTO26435.1" - GIsul2
 # "WP_001120888.1" - IS91
 # "AVD07301.1" - Tn916
 # "VUX23898.1" - Integron_Arginine
 # "VGK33888.1" - Integron_Proline
+# "WP_000954590.1" - new GIsul2
+# WP_001291561.1 - new Tn916
 an_folder = "/Users/gera/PycharmProjects/HTrate/an"
 biosample_folder = "/Users/gera/PycharmProjects/HTrate/biosample"
 df = {}

@@ -8,11 +8,15 @@ import sys
 
 
 class Nucleotide:
-    def __init__(self, accession_number):
+    def __init__(self, accession_number, folder):
         self.an = accession_number
-        self.file = accession_number + ".gb"
-    def nuc_download(self, api_key, start, end, output):
-        request = "efetch -db nucleotide -id " + self.an + " -format gb -api_key " + api_key + " -seq_start " + start + " -seq_stop " + end + " > " + output
+        self.folder = folder
+        self.file = folder + "/" +accession_number + ".gb"
+        #self.file = folder + "/" + accession_number + ".fasta"
+    def nuc_download(self, api_key, start, end, strand, output):
+        request = "efetch -db nucleotide -id " + self.an + " -format gb -api_key " + api_key + " -seq_start " + (start) + " -seq_stop " + (end) + " -strand " + strand +"> " + output
+        #request = "efetch -db nucleotide -id " + self.an + " -format fasta -api_key " + api_key + " -seq_start " + (
+        #    start) + " -seq_stop " + (end) + " -strand " + strand + "> " + output
         os.system(request)
 
 class MappingTable:
@@ -57,6 +61,8 @@ class IdenticalProtein:
         genera_number = {}  # DICTIONARY: 'genera' -> number of instances
         all_nucs = []  # list of all nucleotide sequences where the IP is found
         copy_number = {}  # copy number per nucleotide sequence
+        nuc_start, nuc_end, nuc_strand = {}, {}, {}  # start, end and strand of the nucleotides sequence,
+        # corresponding to the IP
         while line:
             line = line.rstrip()
             my_list = (line.split('\t'))
@@ -70,6 +76,9 @@ class IdenticalProtein:
                 else:
                     copy_number[nuc] = 1
                     all_nucs.append(nuc)
+                    nuc_start[nuc]=my_list[3]
+                    nuc_end[nuc]=my_list[4]
+                    nuc_strand[nuc]=my_list[5]
                 if genera in all_genera:
                     genera_number[genera] += 1
                 else:
@@ -82,7 +91,7 @@ class IdenticalProtein:
                  pass
             line = file.readline()
         file.close()
-        return all_accession_numbers, all_genera, genera_number, copy_number
+        return all_accession_numbers, all_genera, genera_number, all_nucs, copy_number, nuc_start, nuc_end, nuc_strand
 
 
 class ProteinInstance:
