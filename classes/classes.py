@@ -66,13 +66,13 @@ class Nucleotide:
             max_position = ""
             for tsd in my_reps:
                 #print(tsd)
-                tsd_length = abs(tsd[0]-tsd[1])+1
+                tsd_length = tsd[3]-tsd[2]+1
                 mge_length = abs(tsd[0]-tsd[2])+1
                 #print("repeats are", tsd_length)
                 if tsd_length > length and mge_length > 1000:
                     length = tsd_length
                     max_position = tsd
-            if length > 15:
+            if length > 12:
                 print("max tsd length is ", length, "position:", max_position, "in", self.file)
         except AssertionError:
             print("no repeats found")
