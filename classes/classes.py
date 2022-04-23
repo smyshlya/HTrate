@@ -18,6 +18,36 @@ class Nucleotide:
         #request = "efetch -db nucleotide -id " + self.an + " -format fasta -api_key " + api_key + " -seq_start " + (
         #    start) + " -seq_stop " + (end) + " -strand " + strand + "> " + output
         os.system(request)
+    def get_genera(self):
+        file = open(self.file, "r")
+        #print("opening", file)
+        line = file.readline()
+        generas = "no genera"
+        #print("return ", generas)
+        #print("something 1")
+        while line:
+            #print(line)
+            line = line.rstrip()
+            try: my_list = line.split()
+            except: my_list = ["dummy"]
+            #print(my_list)
+            first = ""
+            try: first = my_list[0]
+            except: pass
+            if "ORGANISM" in first:
+                try:
+                    generas = my_list[1]
+                    #print("found org, genera is ", generas)
+                except:
+                    print("can't find organism")
+            line = file.readline()
+            #print("something 2")
+            #print(generas)
+        file.close()
+        #print("return new ", generas)
+        #print("something 3")
+
+        return generas
 
 class MappingTable:
     def __init__(self, filename, threshold):
@@ -258,6 +288,10 @@ class BioSample:
 
     def get_info(self):
         info = {'location': 'NA', 'isolation_source': 'NA', 'collection_date': 'NA', 'sample_type': 'NA'}
+        countries = ["USA", "Canada", "France", "China", "Australia", "United Kingdom", "Norway", "Egypt", "Germany",
+                     "South Korea", "Sweden", "Brazil", "Chile", "Romania", "Japan", "India", "South Africa", "Colombia",
+                     "Mexico", "Belgium", "Czech Republic", "Portugal", "Nigeria", "Poland", "Thailand", "Iraq", "Spain",
+                     "Paraguay", "Netherlands", "Switzerland", "Myanmar"]
         if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
             file = open(self.file, "r")
             line = file.readline()
@@ -269,6 +303,10 @@ class BioSample:
                 if "/geographic location" in line:
                     my_list = line.split('=')
                     info['location'] = my_list[1]
+                    for i_country in countries:
+                        if i_country in my_list[1]:
+                            info['location'] = i_country
+
                 elif "/isolation source" in line:
                     my_list = line.split('=')
                     info['isolation_source'] = my_list[1]
@@ -294,6 +332,18 @@ class BioSample:
                 line = file.readline()
         return info
         file.close()
+
+    def find_a_word(self, word):
+        if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
+            file = open(self.file, "r")
+            line = file.readline()
+            while line:
+                line = line.rstrip()
+                line = line.replace("\"", "")
+                if re.search(word, line, re.IGNORECASE):
+#                if word in line:
+                    print(self.an, line)
+                line = file.readline()
 
     def exists(self):
         if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
@@ -339,6 +389,7 @@ class BioSample:
             new_df['Total'] = new_df.sum(axis=1)
             new_df.sort_values(by='Total', inplace=True, ascending=False)
             new_df = new_df.drop(['Total'], axis=1)
-            new_df.head(n=30).plot(kind="bar", figsize=(10, 4), rot=90, fontsize='small')
+            new_df.head(n=100).plot(kind="bar", figsize=(10, 4), rot=90, fontsize='small')
+            plt.yscale("log")
         plt.draw()
         plt.pause(0.1)

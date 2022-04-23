@@ -102,7 +102,7 @@ for acc_number in derefed:
     #        print("unique accessions: ", len(unique))
     # we open the IP file and remove all instances of the protein from the mapping table
     try:
-        all_identical, genera, genera_number, copy_number = identical_protein.parse_identical_protein()
+        all_identical, genera, genera_number, all_nucs, copy_number, nuc_start, nuc_end, nuc_strand = identical_protein.parse_identical_protein()
     except:
         print(acc_number, "is damaged")
     try:

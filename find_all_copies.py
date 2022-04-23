@@ -8,7 +8,7 @@ start_time = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument("file", default="nothing", help="This is the input file")
 parser.add_argument("--a", default=False, help="create alignment of nucleotide sequences")
-parser.add_argument("--s", default=100, help="nucleotide sequneces are expanded by this length for the alignment")
+parser.add_argument("--s", default=100, help="nucleotide sequences are expanded by this length for the alignment")
 parser.add_argument("--api_key", default="none", help="This is your api_key to access NCBI")
 parser.add_argument("--ht", default=2, help="threshold number of genera for HT detection; default is 2")
 args = parser.parse_args()
@@ -17,6 +17,7 @@ filename = os.path.abspath(filename)
 directory = os.path.dirname(filename) + "/ip"
 nuc_directory = os.path.dirname(filename) + "/nuc"
 out_file = nuc_directory+"/All_out.fa"
+protein_file = nuc_directory+"/proteins.fa"
 
 if not os.path.isdir(directory):
     print("creating %s folder" % directory)
@@ -26,6 +27,7 @@ if not os.path.isdir(nuc_directory):
     os.mkdir(nuc_directory)
 print("your nuc_directory is", nuc_directory)
 nuc_out = open(out_file, "w+")
+p_out = open(protein_file, "w+")
 api_key = args.api_key
 HT_threshold = int(args.ht)  # define the criteria for Horizontal Transfer
 print("input file is", filename)
@@ -33,6 +35,8 @@ print("your api_key is", api_key)
 
 count, count_all, count_HT = 0, 0, 0
 all_count, all_identical_array, all_identical_lens, all_genera, ht_genera = [], [], [], [], []
+
+
 
 # here we will read the mapping table
 mapping_table = MappingTable(filename, 0)
@@ -82,24 +86,24 @@ for acc_number in new_array:
     #now import nuc files
     counting = 0
     try:
+        print("Total number of identical sequences to process: ", len(all_nucs))
         for v in all_nucs:
+            check = "CP058958"
+            if check in v:
+                print("processing ", v)
             counting += 1
-            left_border = 60000
+            left_border = 1000
             right_border = 1000
             size = len(all_nucs)
-            print(counting, "out of", size, "; nucleotide accession number is ", v, ", start is ", nuc_start[v], ", end is ", nuc_end[v], ", strand is ", nuc_strand[v])
             nucleotide = Nucleotide(v, nuc_directory)
             try:
                 new_start, new_end = ("", "")
                 if "+" in nuc_strand[v]:
-                    print("strand is plus")
                     start = int(nuc_start[v]) - left_border
                     end = int(nuc_end[v]) + right_border
                 else:
-                    print("strand is minus")
                     start = int(nuc_start[v]) - right_border
                     end = int(nuc_end[v]) + left_border
-                print("start and end are", start, end)
                 if os.path.isfile(nucleotide.file) and os.path.getsize(nucleotide.file) > 0:
                     pass
                 else:
@@ -107,25 +111,57 @@ for acc_number in new_array:
                         print("trying")
                         nucleotide.nuc_download(api_key, str(start), str(end), nuc_strand[v], nucleotide.file)
                     else:
-                        print("the nucleotide sequence", v, "is too short")
-                #here we check if GMP synthase is in the downloaded
+                        if check in v:
+                            print(v, "is a bit out of range")
                 with open(nucleotide.file) as f:
-                    #if 'GMP synthase' in f.read():
+                    genera = nucleotide.get_genera()
                     if 'horraefdaede' in f.read():
                         offtarget = False
                     else:
                         offtarget = True
-                if  offtarget:
+                if offtarget:
+                    position_start, position_end = "string", "string"
                     for seq_record in SeqIO.parse(nucleotide.file, "gb"):
-                        position = seq_record.seq.find("CATTAGCGCAAGG")
-                        subseq_record = seq_record.seq[int(position)-400 : int(position)+10]
+                        position_start = seq_record.seq.find("GAATGATTCCGCGT")
+                        position_end = seq_record.seq.find("TTTACAATAGAGTGGGA")
+                        subseq_record = seq_record.seq[int(position_start)-400 : int(position_end)+400]
+                        subRecord = seq_record[int(position_start)-400: int(position_end)+400]
+                        if check in v:
+                            print("for ", v, " right end is", position_end)
+                            print("for ", v, " left end is", position_start)
+                            print("subrecord is", subRecord)
+                            print("number of features: ", len(subRecord.features))
+                        for feature in subRecord.features:
+                            if check in v:
+                                print(feature.type)
+
+                            if "CDS" in feature.type:
+                                if check in v:
+                                    print("cool")
+                                    print("qualifiers are", feature.qualifiers)
+                                    #print(feature)
+                                #if "oxa" in feature.qualifiers['product'][0]:
+
+                                #QLI99383
+                                try:
+                                    if "QLI99383" in feature.qualifiers['protein_id'][0]:
+                                        print('>'+feature.qualifiers['protein_id'][0]+feature.qualifiers['product'][0],"\n", feature.qualifiers['translation'][0])
+                                    #p_out.write("salut")
+
+                                    #print("genera is ", genera)
+                                    p_out.write('>'+genera+"_"+feature.qualifiers['protein_id'][0]+"_"+feature.qualifiers['product'][0]+"\n"+feature.qualifiers['translation'][0]+"\n")
+                                except: print("damaged feature")
+                        SeqIO.write((subRecord), nucleotide.file+"_2.gb", "genbank")
                         if subseq_record:
                             nuc_out.write(">"+seq_record.id+"\n"+str(subseq_record)+"\n")
-                        print(subseq_record)
+                            #p_out.write(">" + seq_record.id + "\n" + str(subseq_record) + "\n")
+                        #print(subseq_record)
 
 
             except:
-                print(nuc_start[v], "or", nuc_end[v], " are not integers")
+                pass
+                #print(v, "had some issues")
+            #    print(nuc_start[v], "or", nuc_end[v], " are not integers")
         max_key = max(copy_number, key=copy_number.get)
         if copy_number[max_key] > 0:
             print("for " + acc_number + " the maximum key is " + max_key + " : " + str(
