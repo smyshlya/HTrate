@@ -7,6 +7,48 @@ from Bio import Entrez
 import sys
 
 
+class Nucleotide:
+    def __init__(self, accession_number, folder):
+        self.an = accession_number
+        self.folder = folder
+        self.file = folder + "/" +accession_number + ".gb"
+        #self.file = folder + "/" + accession_number + ".fasta"
+    def nuc_download(self, api_key, start, end, strand, output):
+        request = "efetch -db nucleotide -id " + self.an + " -format gb -api_key " + api_key + " -seq_start " + (start) + " -seq_stop " + (end) + " -strand " + strand +"> " + output
+        #request = "efetch -db nucleotide -id " + self.an + " -format fasta -api_key " + api_key + " -seq_start " + (
+        #    start) + " -seq_stop " + (end) + " -strand " + strand + "> " + output
+        os.system(request)
+    def get_genera(self):
+        file = open(self.file, "r")
+        #print("opening", file)
+        line = file.readline()
+        generas = "no genera"
+        #print("return ", generas)
+        #print("something 1")
+        while line:
+            #print(line)
+            line = line.rstrip()
+            try: my_list = line.split()
+            except: my_list = ["dummy"]
+            #print(my_list)
+            first = ""
+            try: first = my_list[0]
+            except: pass
+            if "ORGANISM" in first:
+                try:
+                    generas = my_list[1]
+                    #print("found org, genera is ", generas)
+                except:
+                    print("can't find organism")
+            line = file.readline()
+            #print("something 2")
+            #print(generas)
+        file.close()
+        #print("return new ", generas)
+        #print("something 3")
+
+        return generas
+
 class MappingTable:
     def __init__(self, filename, threshold):
         self.filename = filename
@@ -47,13 +89,26 @@ class IdenticalProtein:
         all_accession_numbers = []  # LIST of all accession numbers belonging to this IP
         all_genera = []  # LIST of all genera where this IP is found
         genera_number = {}  # DICTIONARY: 'genera' -> number of instances
+        all_nucs = []  # list of all nucleotide sequences where the IP is found
+        copy_number = {}  # copy number per nucleotide sequence
+        nuc_start, nuc_end, nuc_strand = {}, {}, {}  # start, end and strand of the nucleotides sequence,
+        # corresponding to the IP
         while line:
             line = line.rstrip()
             my_list = (line.split('\t'))
-            if len(my_list)>8:
+            if len(my_list) > 8:
                 specie = (my_list[8])
                 genera_array = (specie.split(' '))
                 genera = genera_array[0]
+                nuc = (my_list[2])
+                if nuc in all_nucs:
+                    copy_number[nuc] += 1
+                else:
+                    copy_number[nuc] = 1
+                    all_nucs.append(nuc)
+                    nuc_start[nuc]=my_list[3]
+                    nuc_end[nuc]=my_list[4]
+                    nuc_strand[nuc]=my_list[5]
                 if genera in all_genera:
                     genera_number[genera] += 1
                 else:
@@ -66,7 +121,7 @@ class IdenticalProtein:
                  pass
             line = file.readline()
         file.close()
-        return all_accession_numbers, all_genera, genera_number
+        return all_accession_numbers, all_genera, genera_number, all_nucs, copy_number, nuc_start, nuc_end, nuc_strand
 
 
 class ProteinInstance:
@@ -78,32 +133,35 @@ class ProteinInstance:
         else:
             self.type = "usual"
 
+
+
     def download(self, api_key):
         # api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
         request = "efetch -db protein -id " + self.an + " -format gb -api_key " + api_key + " > " + self.file
         os.system(request)
 
     @staticmethod
-    def download_multiple(protein_instances, api_key, debug):  # adopted mostly from https://www.biostars.org/p/66921/
-        # and https://biopython.org/docs/1.74/api/Bio.Entrez.html
+    def download_multiple(protein_instances, api_key, debug, what_you_want, folder):  # adopted mostly
+        # from https://www.biostars.org/p/66921 and https://biopython.org/docs/1.74/api/Bio.Entrez.html
         #        protein_instances = ["VTO26435.1", "AVD07301.1", "VUX23898.1"]
         print("downloading", len(protein_instances), " proteins")
-        protein_instances = protein_instances[30:40]
-        n = 3
+        n = 50
         f = open("biosample_mapping_table.txt", "w+")
         corr = open("an_corrupted.txt", "w+")
+        an_to_ref = {}
+        an_to_all_an = {}
+        deref_file = folder + "/DBderef.txt"
+        deref = open(deref_file, "a+")
         for i in range(0, len(protein_instances), n):
             new_protein_instances = protein_instances[i:i + n]
             print("looking at seqs from ", i, " to ", i+n)
-            print(new_protein_instances)
             Entrez.email = "smyshlya@embl.de"
             if debug:
                 print(new_protein_instances)
             request = Entrez.epost("protein", id=",".join(new_protein_instances),
-                                   email="smyshlya@embl.de", api_key=api_key)
-            print(",".join(new_protein_instances))
+                                   email="georgy.smyshlyaev@unige.ch", api_key=api_key)
             try:
-                result = Entrez.read(request, validate=False, escape=True)
+                result = Entrez.read(request, validate=False)
                 print("good request is", request)
             except:
                 print("got problems with these accessions")
@@ -115,21 +173,74 @@ class ProteinInstance:
                 print("posting successful: ", result)
                 print("webEnv is", webEnv)
                 print("queryKey is ", queryKey)
+            if "identical" in what_you_want:
+                rettype="ipg"
+                retmode="text"
+            else:
+                rettype = "native"  # could be invalid
+                retmode = "xml"
             records_handle = Entrez.efetch(db='protein', retmax=n,
                                            webenv=webEnv, query_key=queryKey,
                                            email="smyshlya@embl.de", api_key=api_key,
-                                           retmode="xml")
-            records = Entrez.parse(records_handle)
-            for record in records:
-                if 'GBSeq_xrefs' in record.keys():
-                    xref = record['GBSeq_xrefs']
-                    for dbs in xref:
-                        if 'BioSample' in dbs['GBXref_dbname']:
-                            f.write("%s\t%s\n" % (record['GBSeq_locus'], dbs['GBXref_id']))
-                else:
-                    print("record has no GBSeq_xrefs")
-                corr.write("some of accesion from %s to %s are corrupted\n" %(i, i+n) )
-        records_handle.close
+                                           retmode=retmode,
+                                           rettype=rettype
+                                           )
+            all_lines = []
+            if "identical" in what_you_want:
+                line = records_handle.readline()
+                line = records_handle.readline()
+                while line:
+                    line = line.rstrip()
+                    for p in new_protein_instances:  # there's a bit of a big now for two identical proteins being in
+                        # the same genome, could get problematic
+                        if p in line:
+                            my_list1 = line.split('\t')
+                            ip_unique_number = my_list1[0]
+                            try:
+                                new_out.writelines(all_lines)
+                            except:
+                                pass
+                            all_lines = []
+                            new_file = folder + "/" + p + ".ip"
+                            new_out = open(new_file, "w+")
+                            all_lines.append(line+"\n")
+                            try:
+                                deref.write("%s:%s\n" % (star, an_to_all_an[star]))
+                            except:
+                                pass
+                            star = p
+                            an_to_all_an[star] = []
+                        elif "WP_" in line:
+                            if star in an_to_ref:
+                                pass
+                            else:
+                                my_list = line.split('\t')
+                                an_to_ref[star] = my_list[6]
+                                an_to_all_an[star].append(my_list[6])
+                        else:
+                            if (p == star) & (ip_unique_number in line):
+                                all_lines.append(line+"\n")
+                                my_list = line.split('\t')
+                                an_to_all_an[star].append(my_list[6])
+                    try:
+                        line = records_handle.readline()
+                    except:
+                        pass
+            else:
+                records = Entrez.parse(records_handle)
+                for record in records:
+                    print("record has following keys:", record.keys())
+                    if 'GBSeq_xrefs' in record.keys():
+                        xref = record['GBSeq_xrefs']
+                        print("xref is ", xref)
+                        for dbs in xref:
+                            if 'BioSample' in dbs['GBXref_dbname']:
+                                f.write("%s\t%s\n" % (record['GBSeq_locus'], dbs['GBXref_id']))
+                    else:
+                        print("record has no GBSeq_xrefs")
+                    corr.write("some of accesion from %s to %s are corrupted\n" %(i, i+n) )
+            records_handle.close
+        deref.close()
 
 
     def get_biosample(self):
@@ -144,7 +255,6 @@ class ProteinInstance:
                 if len(my_list) > 1:
                     try: biosample = my_list[1]
                     except: raise Exception('Problem with '+line)
-                    #print("found "+biosample)
             line = file.readline()
         file.close()
         return biosample
@@ -178,6 +288,10 @@ class BioSample:
 
     def get_info(self):
         info = {'location': 'NA', 'isolation_source': 'NA', 'collection_date': 'NA', 'sample_type': 'NA'}
+        countries = ["USA", "Canada", "France", "China", "Australia", "United Kingdom", "Norway", "Egypt", "Germany",
+                     "South Korea", "Sweden", "Brazil", "Chile", "Romania", "Japan", "India", "South Africa", "Colombia",
+                     "Mexico", "Belgium", "Czech Republic", "Portugal", "Nigeria", "Poland", "Thailand", "Iraq", "Spain",
+                     "Paraguay", "Netherlands", "Switzerland", "Myanmar"]
         if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
             file = open(self.file, "r")
             line = file.readline()
@@ -189,6 +303,10 @@ class BioSample:
                 if "/geographic location" in line:
                     my_list = line.split('=')
                     info['location'] = my_list[1]
+                    for i_country in countries:
+                        if i_country in my_list[1]:
+                            info['location'] = i_country
+
                 elif "/isolation source" in line:
                     my_list = line.split('=')
                     info['isolation_source'] = my_list[1]
@@ -214,6 +332,18 @@ class BioSample:
                 line = file.readline()
         return info
         file.close()
+
+    def find_a_word(self, word):
+        if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
+            file = open(self.file, "r")
+            line = file.readline()
+            while line:
+                line = line.rstrip()
+                line = line.replace("\"", "")
+                if re.search(word, line, re.IGNORECASE):
+#                if word in line:
+                    print(self.an, line)
+                line = file.readline()
 
     def exists(self):
         if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
@@ -259,6 +389,7 @@ class BioSample:
             new_df['Total'] = new_df.sum(axis=1)
             new_df.sort_values(by='Total', inplace=True, ascending=False)
             new_df = new_df.drop(['Total'], axis=1)
-            new_df.head(n=30).plot(kind="bar", figsize=(10, 4), rot=90, fontsize='small')
+            new_df.head(n=100).plot(kind="bar", figsize=(10, 4), rot=90, fontsize='small')
+            plt.yscale("log")
         plt.draw()
         plt.pause(0.1)

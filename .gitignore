@@ -1,5 +1,6 @@
 downlaod_identical.py
 venv/*
+biosample/*
 classes/__pycache__/
 .idea/
 .gitignore~
@@ -8,3 +9,10 @@ classes/plot2.py
 out.txt
 README.md~
 ip/*
+*.csv
+*.txt*
+*.png
+*.svg
+*.pdf
+*.xml
+*.zip
