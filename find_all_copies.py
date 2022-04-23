@@ -3,7 +3,7 @@ from classes.classes import MappingTable, IdenticalProtein, Nucleotide
 import argparse
 import time
 from Bio import SeqIO
-
+debug = False
 start_time = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument("file", default="nothing", help="This is the input file")
@@ -18,6 +18,7 @@ directory = os.path.dirname(filename) + "/ip"
 nuc_directory = os.path.dirname(filename) + "/nuc"
 out_file = nuc_directory+"/All_out.fa"
 protein_file = nuc_directory+"/proteins.fa"
+limit_to_download = 100  # limits nuc sequences to download - should be fixed later
 
 if not os.path.isdir(directory):
     print("creating %s folder" % directory)
@@ -73,6 +74,7 @@ for acc_number in new_array:
     # check if corresponding accession number does not exist in previously processed IdenticalProtein
     #    if acc_number not in already_identical:
     count += 1
+
     # print(count)
     identical_protein = IdenticalProtein(acc_number, directory)
     all_count.append(count)
@@ -85,17 +87,24 @@ for acc_number in new_array:
         print(acc_number, "is damaged")
     #now import nuc files
     counting = 0
+    #print(all_nucs)
     try:
-        print("Total number of identical sequences to process: ", len(all_nucs))
+        #print("Total number of identical sequences to process for acc num ",acc_number,"is", len(all_nucs))
+
         for v in all_nucs:
             check = "CP058958"
             if check in v:
                 print("processing ", v)
             counting += 1
+            if counting > limit_to_download:
+                print("reached ", limit_to_download, "sequences, breaking..")
+                break
             left_border = 1000
             right_border = 1000
             size = len(all_nucs)
             nucleotide = Nucleotide(v, nuc_directory)
+            #print("working with", nucleotide)
+
             try:
                 new_start, new_end = ("", "")
                 if "+" in nuc_strand[v]:
@@ -106,13 +115,20 @@ for acc_number in new_array:
                     end = int(nuc_end[v]) + left_border
                 if os.path.isfile(nucleotide.file) and os.path.getsize(nucleotide.file) > 0:
                     pass
+                    # print(nucleotide.file, "already exists")
                 else:
-                    if start > 0 and end > 0:
-                        print("trying")
+                    if start > 0 and end > 0 :
+                        #print("trying to download", nucleotide.file)
                         nucleotide.nuc_download(api_key, str(start), str(end), nuc_strand[v], nucleotide.file)
                     else:
-                        if check in v:
-                            print(v, "is a bit out of range")
+                        pass
+                        #print(v, "is a bit out of range")
+                try:
+                    #print("tring to find tsds for", nucleotide.file)
+                    nucleotide.find_tsd()
+                except:
+                    pass
+                    # print("cant find tsds..")
                 with open(nucleotide.file) as f:
                     genera = nucleotide.get_genera()
                     if 'horraefdaede' in f.read():
@@ -120,8 +136,10 @@ for acc_number in new_array:
                     else:
                         offtarget = True
                 if offtarget:
+                    print("offtarget")
                     position_start, position_end = "string", "string"
                     for seq_record in SeqIO.parse(nucleotide.file, "gb"):
+
                         position_start = seq_record.seq.find("GAATGATTCCGCGT")
                         position_end = seq_record.seq.find("TTTACAATAGAGTGGGA")
                         subseq_record = seq_record.seq[int(position_start)-400 : int(position_end)+400]
@@ -152,6 +170,7 @@ for acc_number in new_array:
                                     p_out.write('>'+genera+"_"+feature.qualifiers['protein_id'][0]+"_"+feature.qualifiers['product'][0]+"\n"+feature.qualifiers['translation'][0]+"\n")
                                 except: print("damaged feature")
                         SeqIO.write((subRecord), nucleotide.file+"_2.gb", "genbank")
+
                         if subseq_record:
                             nuc_out.write(">"+seq_record.id+"\n"+str(subseq_record)+"\n")
                             #p_out.write(">" + seq_record.id + "\n" + str(subseq_record) + "\n")
@@ -164,10 +183,12 @@ for acc_number in new_array:
             #    print(nuc_start[v], "or", nuc_end[v], " are not integers")
         max_key = max(copy_number, key=copy_number.get)
         if copy_number[max_key] > 0:
-            print("for " + acc_number + " the maximum key is " + max_key + " : " + str(
+            if debug:
+                print("for " + acc_number + " the maximum key is " + max_key + " : " + str(
                 copy_number[max_key]) + ", genera are: " + str(genera))
     except:
         print("couldn't identify max for " + acc_number)
+
 
 #here we create file with only nr sequences
 seen = []

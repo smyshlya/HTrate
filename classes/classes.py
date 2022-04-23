@@ -3,7 +3,9 @@ import subprocess
 import matplotlib.pyplot as plt
 import pandas as pd
 import re
+import repeatfinder as rf
 from Bio import Entrez
+from Bio import SeqIO
 import sys
 
 
@@ -11,50 +13,77 @@ class Nucleotide:
     def __init__(self, accession_number, folder):
         self.an = accession_number
         self.folder = folder
-        self.file = folder + "/" +accession_number + ".gb"
-        #self.file = folder + "/" + accession_number + ".fasta"
+        self.file = folder + "/" + accession_number + ".gb"
+        # self.file = folder + "/" + accession_number + ".fasta"
+
     def nuc_download(self, api_key, start, end, strand, output):
-        request = "efetch -db nucleotide -id " + self.an + " -format gb -api_key " + api_key + " -seq_start " + (start) + " -seq_stop " + (end) + " -strand " + strand +"> " + output
-        #request = "efetch -db nucleotide -id " + self.an + " -format fasta -api_key " + api_key + " -seq_start " + (
+        request = "efetch -db nucleotide -id " + self.an + " -format gb -api_key " + api_key + " -seq_start " + (
+            start) + " -seq_stop " + (end) + " -strand " + strand + "> " + output
+        # request = "efetch -db nucleotide -id " + self.an + " -format fasta -api_key " + api_key + " -seq_start " + (
         #    start) + " -seq_stop " + (end) + " -strand " + strand + "> " + output
         os.system(request)
+
     def get_genera(self):
         file = open(self.file, "r")
-        #print("opening", file)
         line = file.readline()
         generas = "no genera"
-        #print("return ", generas)
-        #print("something 1")
         while line:
-            #print(line)
             line = line.rstrip()
-            try: my_list = line.split()
-            except: my_list = ["dummy"]
-            #print(my_list)
+            try:
+                my_list = line.split()
+            except TypeError:
+                my_list = ["dummy"]
             first = ""
-            try: first = my_list[0]
-            except: pass
+            try:
+                first = my_list[0]
+            except TypeError:
+                pass
             if "ORGANISM" in first:
                 try:
                     generas = my_list[1]
-                    #print("found org, genera is ", generas)
-                except:
+                except TypeError:
                     print("can't find organism")
             line = file.readline()
-            #print("something 2")
-            #print(generas)
         file.close()
-        #print("return new ", generas)
-        #print("something 3")
-
         return generas
+
+    def find_tsd(self):
+        #file = open(self.file, "r")
+        #print("finding repeats in", self.file)
+        if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
+            pass
+            #print("file is ok")
+        else:
+            pass
+            #print (self.file, "does not exist")
+        for seq_record in SeqIO.parse(self.file, "gb"):
+            #print("starting loop")
+            #print("sequence is", seq_record.seq)
+            my_reps = rf.get_repeats("'%s'" % seq_record.seq) #default length is 15 see
+            # https://github.com/deprekate/RepeatFinder/blob/master/repeatfinder.py
+        try:
+            length = 0
+            max_position = ""
+            for tsd in my_reps:
+                #print(tsd)
+                tsd_length = abs(tsd[0]-tsd[1])+1
+                mge_length = abs(tsd[0]-tsd[2])+1
+                #print("repeats are", tsd_length)
+                if tsd_length > length and mge_length > 1000:
+                    length = tsd_length
+                    max_position = tsd
+            if length > 15:
+                print("max tsd length is ", length, "position:", max_position, "in", self.file)
+        except AssertionError:
+            print("no repeats found")
 
 class MappingTable:
     def __init__(self, filename, threshold):
         self.filename = filename
         self.threshold = threshold
+
     def parse_mapping_table(self):
-        print("uploading", self.filename,"\n")
+        print("uploading", self.filename, "\n")
         my_array = []
         count = 0
         file = open(self.filename, "r")
@@ -75,7 +104,7 @@ class IdenticalProtein:
     def __init__(self, accession_number, folder):
         self.accession_number = accession_number
         self.folder = folder
-        self.file = folder + "/" + self.accession_number+".ip"
+        self.file = folder + "/" + self.accession_number + ".ip"
 
     def download(self, api_key):
         # api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
@@ -106,9 +135,9 @@ class IdenticalProtein:
                 else:
                     copy_number[nuc] = 1
                     all_nucs.append(nuc)
-                    nuc_start[nuc]=my_list[3]
-                    nuc_end[nuc]=my_list[4]
-                    nuc_strand[nuc]=my_list[5]
+                    nuc_start[nuc] = my_list[3] #NEED TO UPDATE FOR MULTICOPIES!!!!
+                    nuc_end[nuc] = my_list[4]
+                    nuc_strand[nuc] = my_list[5]
                 if genera in all_genera:
                     genera_number[genera] += 1
                 else:
@@ -117,8 +146,8 @@ class IdenticalProtein:
                 all_accession_numbers.append(my_list[6])
                 count += 1
             else:
-#                print("Ipg:", self.accession_number, "is broken")
-                 pass
+                #                print("Ipg:", self.accession_number, "is broken")
+                pass
             line = file.readline()
         file.close()
         return all_accession_numbers, all_genera, genera_number, all_nucs, copy_number, nuc_start, nuc_end, nuc_strand
@@ -132,8 +161,6 @@ class ProteinInstance:
             self.type = "nr RefSeq"
         else:
             self.type = "usual"
-
-
 
     def download(self, api_key):
         # api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
@@ -154,7 +181,7 @@ class ProteinInstance:
         deref = open(deref_file, "a+")
         for i in range(0, len(protein_instances), n):
             new_protein_instances = protein_instances[i:i + n]
-            print("looking at seqs from ", i, " to ", i+n)
+            print("looking at seqs from ", i, " to ", i + n)
             Entrez.email = "smyshlya@embl.de"
             if debug:
                 print(new_protein_instances)
@@ -174,8 +201,8 @@ class ProteinInstance:
                 print("webEnv is", webEnv)
                 print("queryKey is ", queryKey)
             if "identical" in what_you_want:
-                rettype="ipg"
-                retmode="text"
+                rettype = "ipg"
+                retmode = "text"
             else:
                 rettype = "native"  # could be invalid
                 retmode = "xml"
@@ -203,7 +230,7 @@ class ProteinInstance:
                             all_lines = []
                             new_file = folder + "/" + p + ".ip"
                             new_out = open(new_file, "w+")
-                            all_lines.append(line+"\n")
+                            all_lines.append(line + "\n")
                             try:
                                 deref.write("%s:%s\n" % (star, an_to_all_an[star]))
                             except:
@@ -219,7 +246,7 @@ class ProteinInstance:
                                 an_to_all_an[star].append(my_list[6])
                         else:
                             if (p == star) & (ip_unique_number in line):
-                                all_lines.append(line+"\n")
+                                all_lines.append(line + "\n")
                                 my_list = line.split('\t')
                                 an_to_all_an[star].append(my_list[6])
                     try:
@@ -238,10 +265,9 @@ class ProteinInstance:
                                 f.write("%s\t%s\n" % (record['GBSeq_locus'], dbs['GBXref_id']))
                     else:
                         print("record has no GBSeq_xrefs")
-                    corr.write("some of accesion from %s to %s are corrupted\n" %(i, i+n) )
+                    corr.write("some of accesion from %s to %s are corrupted\n" % (i, i + n))
             records_handle.close
         deref.close()
-
 
     def get_biosample(self):
         file = open(self.file, "r")
@@ -249,12 +275,14 @@ class ProteinInstance:
         biosample = False
         while line:
             line = line.rstrip()
-            #print(line)
+            # print(line)
             if "BioSample" in line:
                 my_list = (line.split(': '))
                 if len(my_list) > 1:
-                    try: biosample = my_list[1]
-                    except: raise Exception('Problem with '+line)
+                    try:
+                        biosample = my_list[1]
+                    except:
+                        raise Exception('Problem with ' + line)
             line = file.readline()
         file.close()
         return biosample
@@ -276,21 +304,24 @@ class BioSample:
         self.an = biosample_id
         self.file = folder + "/" + self.an + ".biosample"
         self.prot_an = accession_number
+
     def download(self, api_key):
         if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
-            print("Biosample file"+self.file+"already exists")
+            print("Biosample file" + self.file + "already exists")
         else:
-            print("downloading "+self.an)
-            request1 = "esearch -db biosample -query " + self.an + "[accn] -api_key " + api_key+" | efetch -format txt -api_key " + api_key + " > " + self.file
+            print("downloading " + self.an)
+            request1 = "esearch -db biosample -query " + self.an + "[accn] -api_key " + api_key + " | efetch -format txt -api_key " + api_key + " > " + self.file
             process = subprocess.Popen(request1, stdout=subprocess.PIPE, stdin=subprocess.PIPE,
-                                     shell=True)
+                                       shell=True)
             stdout, stderr = process.communicate()
 
     def get_info(self):
         info = {'location': 'NA', 'isolation_source': 'NA', 'collection_date': 'NA', 'sample_type': 'NA'}
         countries = ["USA", "Canada", "France", "China", "Australia", "United Kingdom", "Norway", "Egypt", "Germany",
-                     "South Korea", "Sweden", "Brazil", "Chile", "Romania", "Japan", "India", "South Africa", "Colombia",
-                     "Mexico", "Belgium", "Czech Republic", "Portugal", "Nigeria", "Poland", "Thailand", "Iraq", "Spain",
+                     "South Korea", "Sweden", "Brazil", "Chile", "Romania", "Japan", "India", "South Africa",
+                     "Colombia",
+                     "Mexico", "Belgium", "Czech Republic", "Portugal", "Nigeria", "Poland", "Thailand", "Iraq",
+                     "Spain",
                      "Paraguay", "Netherlands", "Switzerland", "Myanmar"]
         if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
             file = open(self.file, "r")
@@ -312,9 +343,10 @@ class BioSample:
                     info['isolation_source'] = my_list[1]
                 elif "/collection date" in line:
                     my_list = line.split('=')
-                    my_list2=["",""]
+                    my_list2 = ["", ""]
                     p = re.compile(r'\d+\/\d+')
-                    if p.findall(my_list[1]):  # this is because times like "1900/1952" can not be transformed to Date type,
+                    if p.findall(
+                            my_list[1]):  # this is because times like "1900/1952" can not be transformed to Date type,
                         # so I have to cut them to just "1952"
                         print("finding them all", p.findall(my_list[1]))
                         my_list2 = my_list[1].split('/')
@@ -341,7 +373,7 @@ class BioSample:
                 line = line.rstrip()
                 line = line.replace("\"", "")
                 if re.search(word, line, re.IGNORECASE):
-#                if word in line:
+                    #                if word in line:
                     print(self.an, line)
                 line = file.readline()
 
@@ -378,7 +410,7 @@ class BioSample:
                 for year in range(1932, 2020):
                     year = float('%.1f' % (year))
                     if not year in new_df.index:
-                        empty_series = pd.Series(name = year)
+                        empty_series = pd.Series(name=year)
                         new_df = new_df.append(empty_series)
         new_df = new_df.fillna(0)
         new_df = new_df.sort_index()
