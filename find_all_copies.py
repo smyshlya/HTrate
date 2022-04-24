@@ -3,7 +3,7 @@ from classes.classes import MappingTable, IdenticalProtein, Nucleotide
 import argparse
 import time
 from Bio import SeqIO
-debug = False
+debug = True
 start_time = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument("file", default="nothing", help="This is the input file")
@@ -102,7 +102,7 @@ for acc_number in new_array:
             left_border = 1000
             right_border = 1000
             size = len(all_nucs)
-            nucleotide = Nucleotide(v, nuc_directory)
+
             #print("working with", nucleotide)
 
             try:
@@ -113,19 +113,21 @@ for acc_number in new_array:
                 else:
                     start = int(nuc_start[v]) - right_border
                     end = int(nuc_end[v]) + left_border
+                nucleotide = Nucleotide(v, nuc_directory, str(start), str(end), nuc_strand[v])
                 if os.path.isfile(nucleotide.file) and os.path.getsize(nucleotide.file) > 0:
                     pass
                     # print(nucleotide.file, "already exists")
                 else:
                     if start > 0 and end > 0 :
                         #print("trying to download", nucleotide.file)
-                        nucleotide.nuc_download(api_key, str(start), str(end), nuc_strand[v], nucleotide.file)
+                        nucleotide.nuc_download(api_key,  nucleotide.file)
                     else:
                         pass
                         #print(v, "is a bit out of range")
                 try:
                     #print("tring to find tsds for", nucleotide.file)
-                    nucleotide.find_tsd()
+                    tsd_limit = 15
+                    nucleotide.find_tsd(tsd_limit)  # here we identify TSDs longer than tsd_limit
                 except:
                     pass
                     # print("cant find tsds..")
@@ -182,10 +184,10 @@ for acc_number in new_array:
                 #print(v, "had some issues")
             #    print(nuc_start[v], "or", nuc_end[v], " are not integers")
         max_key = max(copy_number, key=copy_number.get)
-        if copy_number[max_key] > 0:
+        if copy_number[max_key] > 2:
             if debug:
-                print("for " + acc_number + " the maximum key is " + max_key + " : " + str(
-                copy_number[max_key]) + ", genera are: " + str(genera))
+                print("for protein " + acc_number + " the maximum copies of "+ str(
+                copy_number[max_key]) + " are in the genome: " + max_key + ". The genera are: " + str(genera))
     except:
         print("couldn't identify max for " + acc_number)
 

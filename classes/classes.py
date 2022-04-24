@@ -10,17 +10,20 @@ import sys
 
 
 class Nucleotide:
-    def __init__(self, accession_number, folder):
+    def __init__(self, accession_number, folder, start, end, strand):
         self.an = accession_number
         self.folder = folder
-        self.file = folder + "/" + accession_number + ".gb"
-        # self.file = folder + "/" + accession_number + ".fasta"
+        self.start = start
+        self.end = end
+        self.strand = strand
+        self.file = folder + "/" + accession_number + "_" + self.start + "_" + self.end + "_" + self.strand + ".gb"
 
-    def nuc_download(self, api_key, start, end, strand, output):
+    def nuc_download(self, api_key, output):
+        strand = self.strand
+        start = self.start
+        end = self.end
         request = "efetch -db nucleotide -id " + self.an + " -format gb -api_key " + api_key + " -seq_start " + (
             start) + " -seq_stop " + (end) + " -strand " + strand + "> " + output
-        # request = "efetch -db nucleotide -id " + self.an + " -format fasta -api_key " + api_key + " -seq_start " + (
-        #    start) + " -seq_stop " + (end) + " -strand " + strand + "> " + output
         os.system(request)
 
     def get_genera(self):
@@ -47,8 +50,8 @@ class Nucleotide:
         file.close()
         return generas
 
-    def find_tsd(self):
-        #file = open(self.file, "r")
+    def find_tsd(self, number):
+        tsd_limit = number
         #print("finding repeats in", self.file)
         if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
             pass
@@ -72,10 +75,11 @@ class Nucleotide:
                 if tsd_length > length and mge_length > 1000:
                     length = tsd_length
                     max_position = tsd
-            if length > 12:
+            if length > tsd_limit:
                 print("max tsd length is ", length, "position:", max_position, "in", self.file)
         except AssertionError:
             print("no repeats found")
+
 
 class MappingTable:
     def __init__(self, filename, threshold):
@@ -92,7 +96,7 @@ class MappingTable:
             line = line.rstrip()
             my_array.append(line)
             count += 1
-            if count > self.threshold and self.threshold != 0:
+            if count > self.threshold != 0:
                 break
             line = file.readline()
         file.close()
@@ -135,7 +139,7 @@ class IdenticalProtein:
                 else:
                     copy_number[nuc] = 1
                     all_nucs.append(nuc)
-                    nuc_start[nuc] = my_list[3] #NEED TO UPDATE FOR MULTICOPIES!!!!
+                    nuc_start[nuc] = my_list[3]  # NEED TO UPDATE FOR MULTYCOPIES!!!!
                     nuc_end[nuc] = my_list[4]
                     nuc_strand[nuc] = my_list[5]
                 if genera in all_genera:
@@ -294,12 +298,10 @@ class ProteinInstance:
             return False
 
     def get_neighbor(self):
-
         return
 
 
 class BioSample:
-
     def __init__(self, biosample_id, folder, accession_number):
         self.an = biosample_id
         self.file = folder + "/" + self.an + ".biosample"
@@ -337,7 +339,6 @@ class BioSample:
                     for i_country in countries:
                         if i_country in my_list[1]:
                             info['location'] = i_country
-
                 elif "/isolation source" in line:
                     my_list = line.split('=')
                     info['isolation_source'] = my_list[1]
