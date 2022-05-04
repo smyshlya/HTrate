@@ -40,8 +40,7 @@ print("your api_key is", api_key)
 # here we will read the mapping table
 mapping_table = MappingTable(filename, threshold)
 new_array = mapping_table.parse_mapping_table()
-mt_length = len(new_array)
-print("will process", mt_length, "accessions..")
+print("will process", len(new_array), "accessions..")
 
 # now we will download the identical protein report (IP file). We try to download it only once to save computational
 # time.
@@ -67,7 +66,7 @@ for acc_number in new_array:
             all_identical = id_prot.parse_identical_protein()[0]
             derefed = derefed + all_identical
             derefed = list(set(derefed))
-            print("now derefed is", derefed)
+            print("now derefed contains this many acc numbers:", len(derefed))
         else:
             try:
                 print(acc_number, " was already processed")
@@ -105,7 +104,7 @@ for acc_number in to_process:
     all_identical_lens.append(len(all_identical))
     all_genera.append(len(genera))
     new_array = [x for x in new_array if x not in all_identical]
-    print(count_all, "out of", mt_length, " is processed", end='\r')
+    print(count_all, "out of", len(new_array), " is processed", end='\r')
     if not count % 1000:
         plt.close()
         #  now we plot
