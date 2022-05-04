@@ -1,11 +1,13 @@
+This repository contains scripts for identification and analysis of active mobile genetic elements (MGEs) in bacterial genomes. 
+
 # HTrate
 
-Python scripts to identify HTed proteins and analyse their genetic background. HTed proteins are the proteins that are present in unrelated bacteria (same protein sequence exists in different genera) and therefore are putatively horizontally transferred. 
-It takes protein NCBI accession numbers (provided in the input file), creates Identical Protein (IP) record files for each of the accession numbers 
+A python script to identify HTed proteins and analyse their genetic background. HTed proteins are the proteins that are present in unrelated bacteria (same protein sequence exists in different genera) and therefore are putatively horizontally transferred. 
+It takes protein NCBI accession numbers (provided in the input file, see example.txt), creates Identical Protein (IP) record files for each of the accession numbers 
 (stored in the "/ip" folder), and outputs an out.csv file with distribution of all horizontally transferred proteins.
 It also creates a distribution plot for ten most widely distributed proteins. Finally it calculates the HTrate of the dataset: number of horizontally transferred protein / total number of proteins.
 
-Running time for a dataset with ~15K protein accession numbers is approximately 3h on a regular laptop.
+Running time for a dataset with ~35K protein accession numbers is approximately 15h on iMac.
 
 ## Usage
 ```bash
