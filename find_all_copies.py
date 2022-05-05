@@ -24,8 +24,8 @@ filename = args.file
 filename = os.path.abspath(filename)
 directory = os.path.dirname(filename) + "/ip"
 nuc_directory = os.path.dirname(filename) + "/nuc"
-out_file = nuc_directory+"/All_out.fa"
-protein_file = nuc_directory+"/proteins.fa"
+out_file = nuc_directory + "/All_out.fa"
+protein_file = nuc_directory + "/proteins.fa"
 limit_to_download = 100  # limits nuc sequences to download - should be fixed later
 
 if not os.path.isdir(directory):
@@ -96,7 +96,7 @@ for acc_number in new_array:
                     pass
                 else:
                     if start > 0 and end > 0:
-                        nucleotide.nuc_download(api_key,  nucleotide.file)
+                        nucleotide.nuc_download(api_key, nucleotide.file)
                     else:
                         pass
                 try:
@@ -113,25 +113,25 @@ for acc_number in new_array:
                     for seq_record in SeqIO.parse(nucleotide.file, "gb"):
                         position_start = seq_record.seq.find(right_end)
                         position_end = seq_record.seq.find(left_end)
-                        subRecord = seq_record[int(position_start)-400: int(position_end)+400]
+                        subRecord = seq_record[int(position_start) - 400: int(position_end) + 400]
                         subseq_record = subRecord.seq
                         for feature in subRecord.features:
                             if "CDS" in feature.type:
-                                 try:
-                                     p_out.write('>' + genera + "_" + feature.qualifiers['protein_id'][0] + "_" +
-                                                 feature.qualifiers['product'][0] + "\n" +
-                                                 feature.qualifiers['translation'][0] + "\n")
-                                 except:
-                                     print("damaged feature")
+                                try:
+                                    p_out.write('>' + genera + "_" + feature.qualifiers['protein_id'][0] + "_" +
+                                                feature.qualifiers['product'][0] + "\n" +
+                                                feature.qualifiers['translation'][0] + "\n")
+                                except AssertionError:
+                                    print("damaged feature")
                         if subseq_record:
-                            nuc_out.write(">"+seq_record.id+"\n"+str(subseq_record)+"\n")
+                            nuc_out.write(">" + seq_record.id + "\n" + str(subseq_record) + "\n")
             except:
                 pass
         max_key = max(copy_number, key=copy_number.get)
         if copy_number[max_key] > 2:
             if debug:
-                print("for protein " + acc_number + " the maximum copies of "+ str(
-                copy_number[max_key]) + " are in the genome: " + max_key + ". The genera are: " + str(genera))
+                print("for protein " + acc_number + " the maximum copies of " + str(
+                    copy_number[max_key]) + " are in the genome: " + max_key + ". The genera are: " + str(genera))
     except:
         print("couldn't identify max copy number for " + acc_number)
 
@@ -142,6 +142,6 @@ for record in SeqIO.parse(out_file, "fasta"):
     if str(record.seq) not in seen:
         seen.append(str(record.seq))
         records.append(record)
-SeqIO.write(records, out_file+"_nr.fa", "fasta")
+SeqIO.write(records, out_file + "_nr.fa", "fasta")
 
 print("Total time: %s seconds" % (time.time() - start_time))
