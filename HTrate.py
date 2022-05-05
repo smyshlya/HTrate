@@ -5,6 +5,16 @@ import pandas as pd
 import argparse
 import time
 
+# A python script to identify HTed proteins and analyse their genetic background. HTed proteins are the proteins that
+# are present in unrelated bacteria (same protein sequence exists in different genera) and therefore are putatively
+# horizontally transferred. It takes protein NCBI accession numbers (provided in the input file, see example.txt),
+# creates Identical Protein (IP) record files for each of the accession numbers (stored in the "/ip" folder),
+# and outputs an out.csv file with distribution of all horizontally transferred proteins. It also creates a
+# distribution plot for ten most widely distributed proteins. Finally it calculates the HTrate of the dataset: number
+# of horizontally transferred protein / total number of proteins.
+#
+# Running time for a dataset with ~35K protein accession numbers is approximately 15h on iMac.
+
 start_time = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument("file", default="nothing", help="This is the input file")
@@ -105,19 +115,7 @@ for acc_number in to_process:
     all_genera.append(len(genera))
     new_array = [x for x in new_array if x not in all_identical]
     print(count_all, "out of", len(new_array), " is processed", end='\r')
-    if not count % 1000:
-        plt.close()
-        #  now we plot
-        if bool(dataframe_array):
-            df = pd.DataFrame(dataframe_array, index=all_acc_numbers)
-            df['Total_genomes'] = df.sum(axis=1)
-            df['Total_genera'] = ht_genera
-            df.dropna(how='any', axis=1)
-            df['Total_genera'].plot(kind="line", rot=90)
-            plt.draw()
-            plt.pause(0.1)
-        else:
-            print("No horizontally transferred proteins found")
+
 df = pd.DataFrame(dataframe_array, index=all_acc_numbers)
 df['Total_genomes'] = df.sum(axis=1)
 df['Total_genera'] = ht_genera

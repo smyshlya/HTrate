@@ -80,6 +80,14 @@ class Nucleotide:
         except AssertionError:
             print("no repeats found")
 
+    def find_gene_name(self, gene_name):
+        with open(self.file) as f:
+            if gene_name in f.read():
+                offtarget = False
+            else:
+                offtarget = True
+        return offtarget
+
 
 class MappingTable:
     def __init__(self, filename, threshold):
