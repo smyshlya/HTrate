@@ -24,4 +24,7 @@ optional arguments:
 
 ```
 # HTdate
-HTdate.py is developed to retrieve additional metadata, such as isolation date, host and geographic location of the strain where the copy was identified for all MGE copies 
+HTdate.py is developed to retrieve additional metadata, such as isolation date, host and geographic location of the strain where the copy was identified for all MGE copies
+
+# find_all_copies
+To retrieve the full copies of an element the script find_all_copies.py was developed, which requires information on the left and right transposon end sequences to automatically extract all copies of MGE of interest.  The script then creates a file with all protein sequences encoded between determined RE and LE.
