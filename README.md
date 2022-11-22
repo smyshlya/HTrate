@@ -23,3 +23,5 @@ optional arguments:
   --api_key API_KEY  this is your api_key to access NCBI (see https://ncbiinsights.ncbi.nlm.nih.gov/2017/11/02/new-api-keys-for-the-e-utilities/) and download IP records (none is deafult, i am not sure if that works)
 
 ```
+# HTdate
+HTdate.py is developed to retrieve additional metadata, such as isolation date, host and geographic location of the strain where the copy was identified for all MGE copies 
