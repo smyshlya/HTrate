@@ -6,7 +6,10 @@ from Bio import SeqIO
 
 # The script is designed to find all copies of MGEs. It requires the output of HTrate - a tool to detect horizontally
 # transferred genes and uses a list of accession numbers as input. It outputs the MGEs nucleotide sequences and the
-# encoded proteins.
+# encoded proteins. It also attempts to find target site duplications. Now looks for offtargets (do not cotain guaA
+# notion in the file). To change that you have to modify
+# if offtarget:  to
+# if not offtarget
 
 debug = True
 start_time = time.time()
@@ -107,7 +110,7 @@ for acc_number in new_array:
                 genera = nucleotide.get_genera()
                 offtarget = nucleotide.find_gene_name(gene_name)
                 # here we download the nucleotide and protein sequences of the MGEs
-                if offtarget:
+                if offtarget:  # change if you want targeted or not.
                     print("offtarget")
                     position_start, position_end = "string", "string"
                     for seq_record in SeqIO.parse(nucleotide.file, "gb"):

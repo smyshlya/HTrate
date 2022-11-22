@@ -8,9 +8,9 @@ import time
 debug = False
 start_time = time.time()
 #directory = "/Users/gera/PycharmProjects/HTrate/ip"
-directory = "/Users/gera/Desktop/ICEs/tyrosine_recombinase/epsilon_15/manuscript/cryoeEM_paper/Alignments/flanks/ip"
-word = "carb"  # if not empty will output BioSample accession number containing the word and the exact line with the
-# word (case-insensitive)
+directory = "/Users/gera/Desktop/ICEs/tyrosine_recombinase/epsilon_15/manuscript/cryoeEM_paper/Alignments/flanks/ip"  # your folder with downloaded Identical Protein Group files (output of HTrate).
+word = ""  # if not empty will output BioSample accession number containing the word and the exact line with the
+# word (case-insensitive). Eg you can search for AB resistant bacteria by searching 'resist'
 
 #acc_number_array = ["VTO26435.1"]
 #ip_acc_number_array = ["VTO26435.1", "AVD07301.1", "WP_001120888.1", "VUX23898.1"]
@@ -23,14 +23,11 @@ ip_acc_number_array = ["WP_000954590.1"]
 # "VGK33888.1" - Integron_Proline
 # "WP_000954590.1" - new GIsul2
 # WP_001291561.1 - new Tn916
-#an_folder = "/Users/gera/PycharmProjects/HTrate/an"
 an_folder = "/Users/gera/Desktop/ICEs/tyrosine_recombinase/epsilon_15/manuscript/cryoeEM_paper/Alignments/flanks/an"
 #biosample_folder = "/Users/gera/PycharmProjects/HTrate/biosample"
 biosample_folder = "/Users/gera/Desktop/ICEs/tyrosine_recombinase/epsilon_15/manuscript/cryoeEM_paper/Alignments/flanks/biosample"
 df = {}
 ip_count = 0
-
-
 merge = False  # treat all acc_number as one df
 if merge:
     count = 1  # REMOVE LATER!!! UNMUTE count = 1 further down!!
@@ -95,14 +92,10 @@ for accession_number in all_nonRef_acc_number:
             bs_list.append(bs)
             if not bs.exists():  # check if biosample was already downloaded. otherwise download.
                 bs.download(api_key)
-
-
 print("Total number of unique biosamples is ", len(bs_list))
 print("Trying to download all the biosamples again..")
 
 # now all_nonRef_acc_number is a list of accession numbers which we want to analyse
-
-
 bs_id = ""
 dates = []
 an_with_dates = []
@@ -138,7 +131,6 @@ for accession_number in red_acc_numbers:  # here we iterate through all accessio
             print(df[ip_acc_number])
             bs.plot_info(df, 'host', 'all')  # last argument should be  "all" for all the years,
             # or a specific year
-#        print("count"+str(count)+" and "+str(count2)+" out of "+str(len(all_accession_numbers)))
         outfile = ip_acc_number + ".csv"
 
 

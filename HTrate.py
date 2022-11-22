@@ -28,7 +28,7 @@ count, count_all, count_HT = 0, 0, 0
 all_count, all_identical_array, all_identical_lens, all_genera, ht_genera = [], [], [], [], []
 dataframe_array, all_acc_numbers, unique, to_process, derefed = [], [], [], [], []
 genera_number = {}
-debug = True
+debug = False
 
 # here we define input parameters: mapping table file, the only one we need for our analysis,
 # HT threshold and protein number
@@ -65,7 +65,8 @@ for acc_number in new_array:
         all_identical = id_prot.parse_identical_protein()[0]
         derefed = derefed + all_identical
         derefed = list(set(derefed))
-        print("now derefed contains this many acc numbers:", len(derefed))
+        if debug:
+            print("now derefed contains this many acc numbers:", len(derefed))
     else:
         # here we check if the acc num exists in our database of already downloaded proteins DBderef
         if acc_number not in derefed:
@@ -79,9 +80,11 @@ for acc_number in new_array:
             print("now derefed contains this many acc numbers:", len(derefed))
         else:
             try:
-                print(acc_number, " was already processed")
+                if debug:
+                    print(acc_number, " was already processed")
             except ValueError:
-                print("cant't find or download ", acc_number)
+                if debug:
+                    print("cant't find or download ", acc_number)
 
 print("Total to process: ", len(to_process))
 print("Initial to parse: ", len(new_array))
@@ -102,10 +105,12 @@ for acc_number in to_process:
     try:
         max_key = max(copy_number, key=copy_number.get)
         if copy_number[max_key] > 1:
-            print("for " + acc_number + " the maximum key is " + max_key + " : " + str(
-                copy_number[max_key]) + ", genera are: " + str(genera))
+            if debug:
+                print("for " + acc_number + " the maximum key is " + max_key + " : " + str(
+                    copy_number[max_key]) + ", genera are: " + str(genera))
     except:
-        print("couldn't identify max for " + acc_number)
+        if debug:
+            print("couldn't identify max for " + acc_number)
     if len(genera) > HT_threshold:
         dataframe_array.append(genera_number)
         all_acc_numbers.append(acc_number)

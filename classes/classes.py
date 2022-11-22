@@ -8,7 +8,7 @@ from Bio import Entrez
 from Bio import SeqIO
 import sys
 
-
+# a class to work with nucleotide sequences from Genbank
 class Nucleotide:
     def __init__(self, accession_number, folder, start, end, strand):
         self.an = accession_number
@@ -18,6 +18,7 @@ class Nucleotide:
         self.strand = strand
         self.file = folder + "/" + accession_number + "_" + self.start + "_" + self.end + "_" + self.strand + ".gb"
 
+    # this function downloads the gb file that is defined by the Nucleotide object
     def nuc_download(self, api_key, output):
         strand = self.strand
         start = self.start
@@ -26,6 +27,7 @@ class Nucleotide:
             start) + " -seq_stop " + (end) + " -strand " + strand + "> " + output
         os.system(request)
 
+    # this functions gets the genus name of the genome
     def get_genera(self):
         file = open(self.file, "r")
         line = file.readline()
@@ -50,28 +52,22 @@ class Nucleotide:
         file.close()
         return generas
 
+    # this function attempts to find target site duplication in the Nucleotide
     def find_tsd(self, number):
         tsd_limit = number
-        #print("finding repeats in", self.file)
         if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
             pass
-            #print("file is ok")
         else:
             pass
-            #print (self.file, "does not exist")
         for seq_record in SeqIO.parse(self.file, "gb"):
-            #print("starting loop")
-            #print("sequence is", seq_record.seq)
             my_reps = rf.get_repeats("'%s'" % seq_record.seq) #default length is 15 see
             # https://github.com/deprekate/RepeatFinder/blob/master/repeatfinder.py
         try:
             length = 0
             max_position = ""
             for tsd in my_reps:
-                #print(tsd)
                 tsd_length = tsd[3]-tsd[2]+1
                 mge_length = abs(tsd[0]-tsd[2])+1
-                #print("repeats are", tsd_length)
                 if tsd_length > length and mge_length > 1000:
                     length = tsd_length
                     max_position = tsd
@@ -80,6 +76,8 @@ class Nucleotide:
         except AssertionError:
             print("no repeats found")
 
+    # this function checks if the Nucleotide contains a string 'gene_name' in the file.  We use it to see whether
+    # the file contains a specific gene such as 'guaA'
     def find_gene_name(self, gene_name):
         with open(self.file) as f:
             if gene_name in f.read():
@@ -88,7 +86,7 @@ class Nucleotide:
                 offtarget = True
         return offtarget
 
-
+# this class is probably a bit of nonsense, but I will keep it for now
 class MappingTable:
     def __init__(self, filename, threshold):
         self.filename = filename
@@ -112,6 +110,7 @@ class MappingTable:
         return my_array
 
 
+# a class to work with Identical Protein Group records. See https://www.ncbi.nlm.nih.gov/ipg/docs/about/
 class IdenticalProtein:
     def __init__(self, accession_number, folder):
         self.accession_number = accession_number
@@ -119,7 +118,6 @@ class IdenticalProtein:
         self.file = folder + "/" + self.accession_number + ".ip"
 
     def download(self, api_key):
-        # api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
         request = "efetch -db protein -id " + self.accession_number + " -format ipg -api_key " + api_key + " > " + self.file
         os.system(request)
 
@@ -158,13 +156,13 @@ class IdenticalProtein:
                 all_accession_numbers.append(my_list[6])
                 count += 1
             else:
-                #                print("Ipg:", self.accession_number, "is broken")
                 pass
             line = file.readline()
         file.close()
         return all_accession_numbers, all_genera, genera_number, all_nucs, copy_number, nuc_start, nuc_end, nuc_strand
 
 
+# a class to work with protein sequences from Genbank
 class ProteinInstance:
     def __init__(self, accession_number, folder):
         self.an = accession_number
@@ -174,11 +172,13 @@ class ProteinInstance:
         else:
             self.type = "usual"
 
+    # 'download' is much slower as compared to 'download_multiple' but more stable
     def download(self, api_key):
-        # api_key = "bc40eac9be26ca5a6e911b42238d9a983008"
         request = "efetch -db protein -id " + self.an + " -format gb -api_key " + api_key + " > " + self.file
         os.system(request)
 
+    # it works great and fast, but there's a problem with some protein instances that for whatever reasons could not
+    # be retrieved that way - and then the whole thing crashes.
     @staticmethod
     def download_multiple(protein_instances, api_key, debug, what_you_want, folder):  # adopted mostly
         # from https://www.biostars.org/p/66921 and https://biopython.org/docs/1.74/api/Bio.Entrez.html
@@ -230,7 +230,7 @@ class ProteinInstance:
                 line = records_handle.readline()
                 while line:
                     line = line.rstrip()
-                    for p in new_protein_instances:  # there's a bit of a big now for two identical proteins being in
+                    for p in new_protein_instances:  # there's a bit of a bug now for two identical proteins being in
                         # the same genome, could get problematic
                         if p in line:
                             my_list1 = line.split('\t')
@@ -304,9 +304,6 @@ class ProteinInstance:
             return True
         else:
             return False
-
-    def get_neighbor(self):
-        return
 
 
 class BioSample:
@@ -392,6 +389,7 @@ class BioSample:
         else:
             return False
 
+    # now plots only collection date info..
     def plot_info(self, df, value, input_year):
         new_df = pd.DataFrame()
         formatted_date = "collection_date_formatted"
