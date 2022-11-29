@@ -14,6 +14,7 @@ conda env create -f MGEtools.yml
 conda activate HTrate
 ```
 ...and it's ready to use! eg
+```bash
 python HTrate.py -h
 ```
 
