@@ -7,11 +7,13 @@ First you clone the github repository or download and unzip it from this page.
 ```bash
 git clone https://github.com/smyshlya/MGEtools.git
 ```
-Now setting up the environment and it is ready to use!
+Now setting up the environment...
 ```bash
 cd MGEtools/
 conda env create -f MGEtools.yml
 conda activate HTrate
+```
+...and it's ready to use! eg
 python HTrate.py -h
 ```
 
