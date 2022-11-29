@@ -1,8 +1,8 @@
 This repository contains scripts for identification and analysis of active mobile genetic elements (MGEs) in bacterial genomes. 
 # Installation
 
-To use the script it is required to obtain an NCBI API key. Otherwise it is likely that some of the scripts will give errors. See https://support.nlm.nih.gov/knowledgebase/article/KA-05317/en-us
-You can use conda to install all required packages and dependencies.  See conda installation procedure at https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html
+To use the script it is required to obtain an NCBI API key. Otherwise it is likely that some of the scripts will give errors. For obtaining your NCBI API key see https://support.nlm.nih.gov/knowledgebase/article/KA-05317/en-us.
+Use conda to install all required packages and dependencies.  For conda installation procedure see https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html.
 
 First you clone the github repository or download and unzip it from this page.
 ```bash
