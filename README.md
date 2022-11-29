@@ -1,7 +1,7 @@
 This repository contains scripts for identification and analysis of active mobile genetic elements (MGEs) in bacterial genomes. 
 # Installation
 
-To use the script it is required to obtain an NCBI API key. Otherwise it is likely that some of the scripts will give errors. For obtaining your NCBI API key see https://support.nlm.nih.gov/knowledgebase/article/KA-05317/en-us.
+To use the script it is required to obtain EDirect software and your NCBI API key. For installing EDirect see https://dataguide.nlm.nih.gov/edirect/install.html. For obtaining your NCBI API key see https://support.nlm.nih.gov/knowledgebase/article/KA-05317/en-us.
 Use conda to install all required packages and dependencies.  For conda installation procedure see https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html.
 
 First you clone the github repository or download and unzip it from this page.
@@ -21,10 +21,10 @@ python HTrate.py --api_key YOUR_API_KEY HTrate_example.txt
 
 # HTrate
 
-A python script to identify HTed proteins and analyse their genetic background. HTed proteins are the proteins that are present in unrelated bacteria (same protein sequence exists in different genera) and therefore are putatively horizontally transferred. 
-It takes protein NCBI accession numbers (provided in the input file, see example.txt), creates Identical Protein (IP) record files for each of the accession numbers 
-(stored in the "/ip" folder), and outputs an out.csv file with distribution of all horizontally transferred proteins.
-It also creates a distribution plot for ten most widely distributed proteins. Finally it calculates the HTrate of the dataset: number of horizontally transferred protein / total number of proteins.
+A python script to identify HTed proteins and analyse their distribution. HTed proteins are the proteins that are present in unrelated bacteria (same protein sequence exists in different genera) and therefore are putatively horizontally transferred. 
+It takes protein NCBI accession numbers (provided in the input file, see HTrate_example.txt), creates Identical Protein (IP) record files for each of the accession numbers 
+(stored in the "/ip" folder), and outputs an /ip/out.csv file with distribution of all horizontally transferred proteins and HTrate_result.svg image file showing the distribution plot.
+
 
 Running time for a dataset with ~35K protein accession numbers is approximately 15h on iMac.
 
