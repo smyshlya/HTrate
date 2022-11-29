@@ -1,4 +1,10 @@
 This repository contains scripts for identification and analysis of active mobile genetic elements (MGEs) in bacterial genomes. 
+# Installation
+
+You can use conda to install all required packages and dependencies. To install conda see https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html
+
+conda env create -f MGEtools.yml
+conda activate HTrate
 
 # HTrate
 
