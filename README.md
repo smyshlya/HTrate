@@ -1,6 +1,7 @@
 This repository contains scripts for identification and analysis of active mobile genetic elements (MGEs) in bacterial genomes. 
 # Installation
 
+To use the script it is required to obtain an NCBI API key. Otherwise it is likely that some of the scripts will give errors. See https://support.nlm.nih.gov/knowledgebase/article/KA-05317/en-us
 You can use conda to install all required packages and dependencies.  See conda installation procedure at https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html
 
 First you clone the github repository or download and unzip it from this page.
@@ -15,7 +16,7 @@ conda activate HTrate
 ```
 ...and it's ready to use! eg
 ```bash
-python HTrate.py -h
+python HTrate.py --api_key YOUR_API_KEY HTrate_example.txt
 ```
 
 # HTrate
