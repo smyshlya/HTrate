@@ -28,3 +28,16 @@ HTdate.py is developed to retrieve additional metadata, such as isolation date, 
 
 # find_all_copies
 To retrieve the full copies of an element the script find_all_copies.py was developed, which requires information on the left and right transposon end sequences to automatically extract all copies of MGE of interest.  The script then creates a file with all protein sequences encoded between determined RE and LE.
+
+```bash
+usage: find_all_copies.py [-h] [--a A] [--s S] [--api_key API_KEY] file
+
+positional arguments:
+  file               This is the input file
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --a A              create alignment of nucleotide sequences
+  --s S              nucleotide sequences are expanded by this length for the alignment
+  --api_key API_KEY  This is your api_key to access NCBI
+```
