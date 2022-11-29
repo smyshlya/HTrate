@@ -2,9 +2,13 @@ This repository contains scripts for identification and analysis of active mobil
 # Installation
 
 You can use conda to install all required packages and dependencies. To install conda see https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html
-
+```bash
+git clone https://github.com/smyshlya/MGEtools.git
+cd MGEtools/
 conda env create -f MGEtools.yml
 conda activate HTrate
+python HTrate.py -h
+```
 
 # HTrate
 
