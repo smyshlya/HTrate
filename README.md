@@ -1,7 +1,7 @@
 This repository contains scripts for identification and analysis of active mobile genetic elements (MGEs) in bacterial genomes. 
 # Installation
 
-To use the script it is required to obtain EDirect software and your NCBI API key. To install EDirect (see see https://dataguide.nlm.nih.gov/edirect/install.html for more details):
+To use the script it is required to obtain EDirect software (version 10.5) and your NCBI API key. To install EDirect (see see https://dataguide.nlm.nih.gov/edirect/install.html for more details):
 
 ```bash
 cd ~
@@ -9,7 +9,7 @@ cd ~
 perl -MNet::FTP -e \
     '$ftp = new Net::FTP("ftp.ncbi.nlm.nih.gov", Passive => 1);
     $ftp->login; $ftp->binary;
-    $ftp->get("/entrez/entrezdirect/edirect.tar.gz");'
+    $ftp->get("/entrez/entrezdirect/versions/10.5.20181205/edirect.tar.gz");'
 gunzip -c edirect.tar.gz | tar xf -
 rm edirect.tar.gz
 builtin exit
