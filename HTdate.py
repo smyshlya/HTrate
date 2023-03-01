@@ -14,7 +14,7 @@ word = ""  # if not empty will output BioSample accession number containing the 
 
 #acc_number_array = ["VTO26435.1"]
 #ip_acc_number_array = ["VTO26435.1", "AVD07301.1", "WP_001120888.1", "VUX23898.1"]
-ip_acc_number_array = ["WP_000954590.1"]
+ip_acc_number_array = ["WP_000954590"]
 #ip_acc_number_array = all_non_identical_proteins
 # "VTO26435.1" - GIsul2
 # "WP_001120888.1" - IS91

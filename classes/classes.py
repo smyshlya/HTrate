@@ -17,18 +17,20 @@ class Nucleotide:
         self.end = end
         self.strand = strand
         self.file = folder + "/" + accession_number + "_" + self.start + "_" + self.end + "_" + self.strand + ".gb"
+        self.fasta = folder + "/" + accession_number + "_" + self.start + "_" + self.end + "_" + self.strand + ".fa"
 
     # this function downloads the gb file that is defined by the Nucleotide object
-    def nuc_download(self, api_key, output):
+    def nuc_download(self, api_key, output, nuc_format='gb'):
         strand = self.strand
         start = self.start
         end = self.end
-        request = "efetch -db nucleotide -id " + self.an + " -format gb -api_key " + api_key + " -seq_start " + (
+        request = "efetch -db nucleotide -id " + self.an + " -format "+nuc_format+" -api_key " + api_key + " -seq_start " + (
             start) + " -seq_stop " + (end) + " -strand " + strand + "> " + output
         os.system(request)
 
     # this functions gets the genus name of the genome
     def get_genera(self):
+        print("getting genera")
         file = open(self.file, "r")
         line = file.readline()
         generas = "no genera"
@@ -46,39 +48,42 @@ class Nucleotide:
             if "ORGANISM" in first:
                 try:
                     generas = my_list[1]
+                    break
                 except TypeError:
                     print("can't find organism")
             line = file.readline()
         file.close()
         return generas
 
-    # this function attempts to find target site duplication in the Nucleotide
-    def find_tsd(self, number):
-        tsd_limit = number
+    # this function attempts to find all repeats in the Nucleotide
+    def find_repeats(self, repeat_min_length, repeat_max_length, repeat_distance):
         if os.path.isfile(self.file) and os.path.getsize(self.file) > 0:
             pass
         else:
             pass
         for seq_record in SeqIO.parse(self.file, "gb"):
-            my_reps = rf.get_repeats("'%s'" % seq_record.seq) #default length is 15 see
-            # https://github.com/deprekate/RepeatFinder/blob/master/repeatfinder.py
-        try:
-            length = 0
-            max_position = ""
-            for tsd in my_reps:
-                tsd_length = tsd[3]-tsd[2]+1
-                mge_length = abs(tsd[0]-tsd[2])+1
-                if tsd_length > length and mge_length > 1000:
-                    length = tsd_length
-                    max_position = tsd
-            if length > tsd_limit:
-                print("max tsd length is ", length, "position:", max_position, "in", self.file)
-        except AssertionError:
-            print("no repeats found")
+            my_seq = seq_record.seq
+            n_max = 0
+            max_substring = []
+            for i in range(0, len(my_seq)):
+                for k in range(repeat_min_length, repeat_max_length + 1):
+                    substring = my_seq[i:i + k]
+                    n = my_seq[i:i + 2*k + repeat_distance].count(substring)
+                    if n == 1:
+                        continue
+                    else:
+                        if len(substring) == k and n > n_max:
+                            n_max = n
+                            max_substring = [substring]
+                        elif len(substring) == k and n == n_max and (substring not in max_substring):
+                            max_substring.append(substring)
+            print("substring", max_substring, "is repeated", n_max, "times")
+
 
     # this function checks if the Nucleotide contains a string 'gene_name' in the file.  We use it to see whether
     # the file contains a specific gene such as 'guaA'
     def find_gene_name(self, gene_name):
+        print("looking for gene name:", gene_name, "in file", self.file)
         with open(self.file) as f:
             if gene_name in f.read():
                 offtarget = False
@@ -367,6 +372,12 @@ class BioSample:
                 elif " /host" in line:
                     my_list = line.split('=')
                     info['host'] = my_list[1]
+                elif " /strain" in line:
+                    my_list = line.split('=')
+                    info['strain'] = my_list[1]
+                elif "Organism" in line:
+                    my_list = line.split(':')
+                    info['organism'] = my_list[1]
                 line = file.readline()
         return info
         file.close()

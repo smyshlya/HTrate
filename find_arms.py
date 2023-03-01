@@ -10,6 +10,8 @@ from Bio import SeqIO
 # notion in the file). To change that you have to modify
 # if offtarget:  to
 # if not offtarget
+from collections import Counter
+
 
 debug = True
 start_time = time.time()
@@ -19,7 +21,6 @@ parser.add_argument("--a", default=False, help="create alignment of nucleotide s
 parser.add_argument("--s", default=100, help="nucleotide sequences are expanded by this length for the alignment")
 parser.add_argument("--api_key", default="none", help="This is your api_key to access NCBI")
 
-gene_name = "guaA"
 right_end = "GAATGATTCCGCGT"
 left_end = "TTTACAATAGAGTGGGA"
 args = parser.parse_args()
@@ -29,7 +30,7 @@ directory = os.path.dirname(filename) + "/ip"
 nuc_directory = os.path.dirname(filename) + "/nuc"
 out_file = nuc_directory + "/All_out.fa"
 protein_file = nuc_directory + "/proteins.fa"
-limit_to_download = 10000  # limits nuc sequences to download - should be fixed later
+limit_to_download = 100  # limits nuc sequences to download - should be fixed later
 
 if not os.path.isdir(directory):
     print("You should run HTrate.py before!")
@@ -83,8 +84,8 @@ for acc_number in new_array:
             if counting > limit_to_download:
                 print("reached ", limit_to_download, "sequences, breaking..")
                 break
-            left_border = 1000
-            right_border = 50000
+            left_border = 500
+            right_border = 1000
             size = len(all_nucs)
             try:
                 new_start, new_end = ("", "")
@@ -99,55 +100,19 @@ for acc_number in new_array:
                     pass
                 else:
                     if start > 0 and end > 0:
-#                        nucleotide.nuc_download(api_key, nucleotide.fasta, nuc_format='fasta')  #switch to default nuc_format and nucleotide.file for gb
-                        nucleotide.nuc_download(api_key, nucleotide.file)
+                        nucleotide.nuc_download(api_key, nucleotide.file)  # switch to default nuc_format and nucleotide.file for gb
                     else:
                         pass
                 try:
-                    tsd_limit = 5
-                    nucleotide.find_tsd(tsd_limit)  # here we identify TSDs longer than tsd_limit
+                    tsd_min = 9
+                    tsd_max = 10
+                    tsd_distance = 100
+                    print("looking at", nucleotide.file)
+                    nucleotide.find_repeats(tsd_min, tsd_max, tsd_distance)  # here we identify repeats longer than tsd_limit
                 except:
-                    pass
-                genera2 = nucleotide.get_genera()
-                print("genera is", genera2)
-                offtarget = nucleotide.find_gene_name(gene_name)
-                # here we retrieve proteins within MGE borders and the nucleotide borders of the MGEs
-                if not offtarget:  # change if you want targeted or not.
-                    print("offtarget")
-                    position_start, position_end = "string", "string"
-                    for seq_record in SeqIO.parse(nucleotide.file, "gb"):
-                        position_start = seq_record.seq.find(right_end)
-                        position_end = seq_record.seq.find(left_end)
-
-                        subRecord = seq_record[int(position_start) - 400: int(position_end) + 400]
-                        subseq_record = subRecord.seq
-                        for feature in subRecord.features:
-                            if "CDS" in feature.type:
-                                try:
-                                    p_out.write('>' + genera2 + "_" + feature.qualifiers['protein_id'][0] + "_" +
-                                                feature.qualifiers['product'][0] + "\n" +
-                                                feature.qualifiers['translation'][0] + "\n")
-                                except AssertionError:
-                                    print("damaged feature")
-                        if subseq_record:
-                            nuc_out.write(">" + seq_record.id + "\n" + str(subseq_record) + "\n")
+                    print("Error with find_repeats")
             except:
                 pass
-        max_key = max(copy_number, key=copy_number.get)
-        if copy_number[max_key] > 2:
-            if debug:
-                print("for protein " + acc_number + " the maximum copies of " + str(
-                    copy_number[max_key]) + " are in the genome: " + max_key + ". The genera are: " + str(genera))
     except:
-        print("couldn't identify max copy number for " + acc_number)
-
-# here we create file with only nr sequences
-seen = []
-records = []
-for record in SeqIO.parse(out_file, "fasta"):
-    if str(record.seq) not in seen:
-        seen.append(str(record.seq))
-        records.append(record)
-SeqIO.write(records, out_file + "_nr.fa", "fasta")
-
+        pass
 print("Total time: %s seconds" % (time.time() - start_time))
